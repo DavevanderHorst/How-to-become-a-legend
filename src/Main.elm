@@ -4,6 +4,7 @@ import Browser
 import Browser.Dom
 import Browser.Events exposing (onResize)
 import Json.Decode as Decode
+import Levels.TestLevel exposing (createTestLevel)
 import MainView exposing (mainView)
 import Messages exposing (Msg(..))
 import Models exposing (MainModel, PlayerInput(..), Size, startSize)
@@ -37,6 +38,7 @@ init _ =
     ( { windowSize = startSize
       , error = Nothing
       , playerInput = Stopped
+      , level = createTestLevel
       }
     , Task.perform GotViewport Browser.Dom.getViewport
     )
