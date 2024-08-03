@@ -7,7 +7,7 @@ import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
 import MainView exposing (mainView)
 import Messages exposing (Msg(..))
-import Models exposing (MainModel, PlayerInput(..), Size, startSize)
+import Models exposing (Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
 import Task
 
 
@@ -35,10 +35,20 @@ keyDecoder =
 
 init : () -> ( MainModel, Cmd Msg )
 init _ =
+    let
+        ( error, level ) =
+            case createTestLevel of
+                Ok testLevel ->
+                    ( Nothing, testLevel )
+
+                Err err ->
+                    ( Just err, emptyLevel )
+    in
     ( { windowSize = startSize
-      , error = Nothing
-      , playerInput = Stopped
-      , level = createTestLevel
+      , error = error
+      , playerInput = Possible
+      , level = level
+      , pressedKey = "Start"
       }
     , Task.perform GotViewport Browser.Dom.getViewport
     )
@@ -56,6 +66,10 @@ update msg model =
         KeyPressed key ->
             handleKeyPressed key model
 
+        HandleKeyPressed pressedKey ->
+            -- TODO
+            ( model, Cmd.none )
+
 
 handleScreenSize : Float -> Float -> MainModel -> ( MainModel, Cmd Msg )
 handleScreenSize width height model =
@@ -69,7 +83,23 @@ handleScreenSize width height model =
 handleKeyPressed : String -> MainModel -> ( MainModel, Cmd Msg )
 handleKeyPressed key model =
     if model.playerInput == Possible then
-        ( model, Cmd.none )
+        let
+            maybePressedKey =
+                case key of
+                    "ArrowUp" ->
+                        Just ArrowUp
+
+                    _ ->
+                        Nothing
+        in
+        case maybePressedKey of
+            Nothing ->
+                ( model, Cmd.none )
+
+            Just pressedKey ->
+                ( { model | playerInput = Stopped }
+                , Task.perform (\_ -> HandleKeyPressed pressedKey) (Task.succeed True)
+                )
 
     else
         ( model, Cmd.none )

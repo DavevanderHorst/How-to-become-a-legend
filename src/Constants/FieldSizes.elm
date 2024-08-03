@@ -3,12 +3,12 @@ module Constants.FieldSizes exposing (..)
 
 squareSize : Int
 squareSize =
-    30
+    50
 
 
 betweenSquaresSize : Int
 betweenSquaresSize =
-    2
+    3
 
 
 totalSquareSize : Int
@@ -18,7 +18,7 @@ totalSquareSize =
 
 backGroundMargin : Int
 backGroundMargin =
-    50
+    20
 
 
 totalBackGroundMargin : Int

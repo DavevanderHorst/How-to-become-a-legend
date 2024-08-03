@@ -2,7 +2,7 @@ module MainView exposing (..)
 
 import Constants.FieldSizes exposing (squareSize)
 import Dict exposing (Dict)
-import Html exposing (Html, div)
+import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Messages exposing (Msg)
 import Models exposing (Cell, MainModel)
@@ -24,20 +24,26 @@ mainView model =
     --    errorScreen
     --
     --else
-    div
-        [ style "width" (makePxStringFromFloat model.windowSize.width)
-        , style "height" (makePxStringFromFloat model.windowSize.height)
-        , style "display" "flex"
-        , style "justify-content" "center"
-        , style "align-items" "center"
-        ]
-        [ Svg.svg
-            [ style "width" (makePxStringFromInt model.level.playFieldWidth)
-            , style "height" (makePxStringFromInt model.level.playFieldHeight)
-            , style "background-color" "black"
-            ]
-            [ Svg.g [] (drawCells model.level.playFieldDict) ]
-        ]
+    case model.error of
+        Nothing ->
+            div
+                [ style "width" (makePxStringFromFloat model.windowSize.width)
+                , style "height" (makePxStringFromFloat model.windowSize.height)
+                , style "display" "flex"
+                , style "justify-content" "center"
+                , style "align-items" "center"
+                ]
+                [ Svg.svg
+                    [ style "width" (makePxStringFromInt model.level.playFieldWidth)
+                    , style "height" (makePxStringFromInt model.level.playFieldHeight)
+                    , style "background-color" "black"
+                    ]
+                    [ Svg.g [] (drawCells model.level.playFieldDict) ]
+                , div [] [ text model.pressedKey ]
+                ]
+
+        Just error ->
+            div [] [ div [] [ text error.method ], div [] [ text error.error ] ]
 
 
 drawCells : Dict String Cell -> List (Svg Msg)
@@ -51,8 +57,20 @@ drawCell _ cell svgList =
     let
         baseGridCellAttributes =
             makeBaseGridCellAttributes cell
+
+        baseRect =
+            Svg.rect baseGridCellAttributes []
     in
-    Svg.rect baseGridCellAttributes [] :: svgList
+    case cell.content of
+        Models.Empty ->
+            baseRect :: svgList
+
+        Models.Hero ->
+            let
+                imageAttributes =
+                    SvgAttr.xlinkHref "Images/swordsmanNoBg.png" :: baseGridCellAttributes
+            in
+            baseRect :: Svg.image imageAttributes [] :: svgList
 
 
 makeBaseGridCellAttributes : Cell -> List (Attribute msg)

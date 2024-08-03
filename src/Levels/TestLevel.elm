@@ -2,8 +2,9 @@ module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
-import Models exposing (Cell, Coordinate, Level)
-import PlayField.KeyHelpers exposing (makePlayFieldDictKey)
+import Dict.Insert exposing (trySetHeroInMapCellDict)
+import Dict.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Models exposing (Cell, CellContent(..), Coordinate, Error, Level)
 
 
 rows : Int
@@ -16,20 +17,34 @@ columns =
     20
 
 
-createTestLevel : Level
+heroStartSpot : Coordinate
+heroStartSpot =
+    { columnNumber = 5, rowNumber = 4 }
+
+
+createTestLevel : Result Error Level
 createTestLevel =
     let
-        playField =
+        basePlayField =
             List.foldl generateLevelRows Dict.empty (List.range 1 rows)
 
-        playFieldWidth =
-            -- last column and row doesnt need the between squares size
-            (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
-
-        playFieldHeight =
-            (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+        playFieldWithHeroResult =
+            trySetHeroInMapCellDict heroStartSpot basePlayField
     in
-    Level playField playFieldWidth playFieldHeight
+    case playFieldWithHeroResult of
+        Ok playFieldWithHero ->
+            let
+                playFieldWidth =
+                    -- last column and row doesnt need the between squares size
+                    (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+
+                playFieldHeight =
+                    (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+            in
+            Ok (Level playFieldWithHero heroStartSpot playFieldWidth playFieldHeight)
+
+        Err error ->
+            Err { error | error = "Adding hero to playField failed. " ++ error.error }
 
 
 generateLevelRows : Int -> Dict String Cell -> Dict String Cell
@@ -41,7 +56,7 @@ generateLevelColumns : Int -> Int -> Dict String Cell -> Dict String Cell
 generateLevelColumns rowNumber colNumber dict =
     let
         key =
-            makePlayFieldDictKey rowNumber colNumber
+            makeDictKeyFromCoordinate (Coordinate colNumber rowNumber)
 
         gridX =
             -- total size of a cell * (column number - 1)
@@ -52,6 +67,6 @@ generateLevelColumns rowNumber colNumber dict =
             (totalSquareSize * (rowNumber - 1)) + backGroundMargin
 
         createdCell =
-            Cell (Coordinate rowNumber colNumber) gridX gridY
+            Cell (Coordinate colNumber rowNumber) gridX gridY Empty
     in
     Dict.insert key createdCell dict
