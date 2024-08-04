@@ -38,7 +38,7 @@ mainView model =
                     , style "height" (makePxStringFromInt model.level.playFieldHeight)
                     , style "background-color" "black"
                     ]
-                    [ Svg.g [] (drawCells model.level.playFieldDict) ]
+                    [ Svg.g [] (drawCells model.level.playField) ]
                 , div [] [ text model.pressedKey ]
                 ]
 

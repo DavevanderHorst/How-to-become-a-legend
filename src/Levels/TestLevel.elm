@@ -2,8 +2,8 @@ module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
-import Dict.Insert exposing (trySetHeroInPlayField)
-import Dict.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.Insert exposing (trySetHeroInPlayField)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Models exposing (Cell, CellContent(..), Coordinate, Error, Level)
 
 

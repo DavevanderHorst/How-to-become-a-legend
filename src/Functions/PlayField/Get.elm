@@ -1,4 +1,4 @@
-module Dict.Get exposing (..)
+module Functions.PlayField.Get exposing (..)
 
 import Dict exposing (Dict)
 import Models exposing (Cell, Coordinate, Error)

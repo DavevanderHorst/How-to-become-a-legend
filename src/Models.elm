@@ -22,7 +22,7 @@ type alias Error =
 
 
 type alias Level =
-    { playFieldDict : Dict String Cell
+    { playField : Dict String Cell
     , heroCoordinate : Coordinate
     , playFieldWidth : Int
     , playFieldHeight : Int
@@ -65,7 +65,14 @@ type PlayerInput
 
 
 type PressedKey
-    = ArrowUp
+    = Arrow Direction
+
+
+type Direction
+    = Up
+    | Down
+    | Right
+    | Left
 
 
 startSize : Size

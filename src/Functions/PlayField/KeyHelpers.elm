@@ -1,4 +1,4 @@
-module Dict.KeyHelpers exposing (..)
+module Functions.PlayField.KeyHelpers exposing (..)
 
 import Models exposing (Coordinate)
 

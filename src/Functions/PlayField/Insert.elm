@@ -1,8 +1,8 @@
-module Dict.Insert exposing (..)
+module Functions.PlayField.Insert exposing (trySetHeroInPlayField)
 
 import Dict exposing (Dict)
-import Dict.Get exposing (tryGetCellFromPlayField)
-import Dict.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString)
 import Models exposing (Cell, CellContent(..), Coordinate, Error)
 
