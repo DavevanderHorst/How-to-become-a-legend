@@ -1,33 +1,33 @@
 module Dict.Insert exposing (..)
 
 import Dict exposing (Dict)
-import Dict.Get exposing (tryGetCellFromCellDict)
+import Dict.Get exposing (tryGetCellFromPlayField)
 import Dict.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString)
 import Models exposing (Cell, CellContent(..), Coordinate, Error)
 
 
-trySetHeroInMapCellDict : Coordinate -> Dict String Cell -> Result Error (Dict String Cell)
-trySetHeroInMapCellDict coordinate mapCellDict =
+trySetHeroInPlayField : Coordinate -> Dict String Cell -> Result Error (Dict String Cell)
+trySetHeroInPlayField coordinate playField =
     let
         dictKey =
             makeDictKeyFromCoordinate coordinate
 
         getCellResult =
-            tryGetCellFromCellDict dictKey mapCellDict
+            tryGetCellFromPlayField dictKey playField
     in
     case getCellResult of
         Err err ->
             Err err
 
-        Ok mapCell ->
-            if mapCell.content == Empty then
-                Ok (updateGridCellDict dictKey setCellStateToHero mapCellDict)
+        Ok cell ->
+            if cell.content == Empty then
+                Ok (updateGridCellDict dictKey setCellStateToHero playField)
 
             else
                 Err
-                    { method = "Functions.Dict.Insert.trySetHeroInMapCellDict"
-                    , error = "Cant set hero, cell is not empty : " ++ cellContentToString mapCell.content
+                    { method = "Functions.Dict.Insert.trySetHeroInPlayField"
+                    , error = "Cant set hero in play field, cell is not empty : " ++ cellContentToString cell.content
                     }
 
 

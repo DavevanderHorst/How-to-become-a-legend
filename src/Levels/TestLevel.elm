@@ -2,7 +2,7 @@ module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
-import Dict.Insert exposing (trySetHeroInMapCellDict)
+import Dict.Insert exposing (trySetHeroInPlayField)
 import Dict.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Models exposing (Cell, CellContent(..), Coordinate, Error, Level)
 
@@ -26,10 +26,10 @@ createTestLevel : Result Error Level
 createTestLevel =
     let
         basePlayField =
-            List.foldl generateLevelRows Dict.empty (List.range 1 rows)
+            generateTestPlayField
 
         playFieldWithHeroResult =
-            trySetHeroInMapCellDict heroStartSpot basePlayField
+            trySetHeroInPlayField heroStartSpot basePlayField
     in
     case playFieldWithHeroResult of
         Ok playFieldWithHero ->
@@ -44,16 +44,21 @@ createTestLevel =
             Ok (Level playFieldWithHero heroStartSpot playFieldWidth playFieldHeight)
 
         Err error ->
-            Err { error | error = "Adding hero to playField failed. " ++ error.error }
+            Err { error | method = "createTestLevel " ++ error.method, error = "Adding hero to playField failed. " ++ error.error }
 
 
-generateLevelRows : Int -> Dict String Cell -> Dict String Cell
-generateLevelRows rowNumber dict =
-    List.foldl (generateLevelColumns rowNumber) dict (List.range 1 columns)
+generateTestPlayField : Dict String Cell
+generateTestPlayField =
+    List.foldl generatePlayFieldRows Dict.empty (List.range 1 rows)
 
 
-generateLevelColumns : Int -> Int -> Dict String Cell -> Dict String Cell
-generateLevelColumns rowNumber colNumber dict =
+generatePlayFieldRows : Int -> Dict String Cell -> Dict String Cell
+generatePlayFieldRows rowNumber playField =
+    List.foldl (generatePlayFieldColumns rowNumber) playField (List.range 1 columns)
+
+
+generatePlayFieldColumns : Int -> Int -> Dict String Cell -> Dict String Cell
+generatePlayFieldColumns rowNumber colNumber playField =
     let
         key =
             makeDictKeyFromCoordinate (Coordinate colNumber rowNumber)
@@ -69,4 +74,4 @@ generateLevelColumns rowNumber colNumber dict =
         createdCell =
             Cell (Coordinate colNumber rowNumber) gridX gridY Empty
     in
-    Dict.insert key createdCell dict
+    Dict.insert key createdCell playField

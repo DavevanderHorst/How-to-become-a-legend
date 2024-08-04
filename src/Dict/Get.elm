@@ -4,18 +4,18 @@ import Dict exposing (Dict)
 import Models exposing (Cell, Coordinate, Error)
 
 
-tryGetCellFromCellDict : String -> Dict String Cell -> Result Error Cell
-tryGetCellFromCellDict key cellDict =
+tryGetCellFromPlayField : String -> Dict String Cell -> Result Error Cell
+tryGetCellFromPlayField key playField =
     let
         maybeCell =
-            Dict.get key cellDict
+            Dict.get key playField
     in
     case maybeCell of
         Nothing ->
             Err
-                { method = "Functions.Dict.Get.tryGetCellFromCellDict"
-                , error = "Key is not in our cell dict : " ++ key
+                { method = "Functions.Dict.Get.tryGetCellFromPlayField"
+                , error = "Key is not in our play field : " ++ key
                 }
 
-        Just mapCell ->
-            Ok mapCell
+        Just cell ->
+            Ok cell
