@@ -6,13 +6,13 @@ import Browser.Events exposing (onResize)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (moveHeroToNextCoordinateInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
-import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Functions.ToString exposing (coordinateToString)
 import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
 import MainView exposing (mainView)
 import Messages exposing (Msg(..))
-import Models exposing (Direction(..), Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
+import Models exposing (CellContent(..), Direction(..), Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
 import Task
 
 
@@ -53,7 +53,6 @@ init _ =
       , error = error
       , playerInput = Possible
       , level = level
-      , pressedKey = "Start"
       }
     , Task.perform GotViewport Browser.Dom.getViewport
     )
@@ -133,7 +132,7 @@ handlePressedArrowDirection direction model =
             getNextCoordinateForDirection direction model.level.heroCoordinate
 
         nextKey =
-            makeDictKeyFromCoordinate nextCoordinate
+            makePlayFieldDictKeyFromCoordinate nextCoordinate
 
         nextCellResult =
             tryGetCellFromPlayField nextKey model.level.playField
@@ -147,18 +146,29 @@ handlePressedArrowDirection direction model =
         Ok nextCell ->
             -- found a cell, now we check if it possible to move too, or if monster so we now if we move or attack.
             case nextCell.content of
-                Models.Empty ->
+                Empty ->
                     let
                         updatedLevel =
                             moveHeroToNextCoordinateInLevel nextCoordinate model.level
                     in
                     ( { model | level = updatedLevel }, Cmd.none )
 
-                Models.Hero ->
+                Hero ->
                     let
                         newError =
                             { method = "handlePressedArrowDirection"
                             , error = "Cant move Hero, there is another hero in place on coordinate : " ++ coordinateToString nextCoordinate
+                            }
+                    in
+                    ( { model | error = Just newError }, Cmd.none )
+
+                Monster specie ->
+                    -- we move into a monster, so attack!!
+                    -- TODO
+                    let
+                        newError =
+                            { method = "TODO"
+                            , error = "Moved into a monster"
                             }
                     in
                     ( { model | error = Just newError }, Cmd.none )

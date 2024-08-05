@@ -5,7 +5,7 @@ import Dict exposing (Dict)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Messages exposing (Msg)
-import Models exposing (Cell, MainModel)
+import Models exposing (Cell, CellContent(..), MainModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
@@ -39,7 +39,6 @@ mainView model =
                     , style "background-color" "black"
                     ]
                     [ Svg.g [] (drawCells model.level.playField) ]
-                , div [] [ text model.pressedKey ]
                 ]
 
         Just error ->
@@ -62,13 +61,25 @@ drawCell _ cell svgList =
             Svg.rect baseGridCellAttributes []
     in
     case cell.content of
-        Models.Empty ->
+        Empty ->
             baseRect :: svgList
 
-        Models.Hero ->
+        Hero ->
             let
                 imageAttributes =
                     SvgAttr.xlinkHref "Images/swordsmanNoBg.png" :: baseGridCellAttributes
+            in
+            baseRect :: Svg.image imageAttributes [] :: svgList
+
+        Monster specie ->
+            let
+                imageLink =
+                    case specie of
+                        Models.Dummy ->
+                            "Images/dummyNoBg.png"
+
+                imageAttributes =
+                    SvgAttr.xlinkHref imageLink :: baseGridCellAttributes
             in
             baseRect :: Svg.image imageAttributes [] :: svgList
 

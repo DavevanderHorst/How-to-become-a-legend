@@ -1,7 +1,7 @@
 module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe)
 
 import Dict exposing (Dict)
-import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models exposing (Cell, CellContent(..), Coordinate)
 
 
@@ -31,4 +31,4 @@ setContentToEmpty =
 
 updateGridCellDict : Coordinate -> (Maybe Cell -> Maybe Cell) -> Dict String Cell -> Dict String Cell
 updateGridCellDict roomCoordinate function gridCellDict =
-    Dict.update (makeDictKeyFromCoordinate roomCoordinate) function gridCellDict
+    Dict.update (makePlayFieldDictKeyFromCoordinate roomCoordinate) function gridCellDict

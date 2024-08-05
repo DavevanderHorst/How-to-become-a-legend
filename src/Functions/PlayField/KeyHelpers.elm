@@ -3,6 +3,6 @@ module Functions.PlayField.KeyHelpers exposing (..)
 import Models exposing (Coordinate)
 
 
-makeDictKeyFromCoordinate : Coordinate -> String
-makeDictKeyFromCoordinate coordinate =
+makePlayFieldDictKeyFromCoordinate : Coordinate -> String
+makePlayFieldDictKeyFromCoordinate coordinate =
     String.fromInt coordinate.columnNumber ++ "," ++ String.fromInt coordinate.rowNumber

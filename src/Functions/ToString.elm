@@ -1,6 +1,6 @@
 module Functions.ToString exposing (..)
 
-import Models exposing (CellContent(..), Coordinate)
+import Models exposing (CellContent(..), Coordinate, Specie(..))
 
 
 coordinateToString : Coordinate -> String
@@ -16,3 +16,13 @@ cellContentToString content =
 
         Hero ->
             "Hero"
+
+        Monster specie ->
+            "Monster - " ++ specieToString specie
+
+
+specieToString : Specie -> String
+specieToString specie =
+    case specie of
+        Dummy ->
+            "Dummy"

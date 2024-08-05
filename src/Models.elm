@@ -8,7 +8,6 @@ type alias MainModel =
     , error : Maybe Error
     , playerInput : PlayerInput
     , level : Level
-    , pressedKey : String
     }
 
 
@@ -54,9 +53,18 @@ type alias Size =
     }
 
 
+type alias MonsterModel =
+    { coordinate : Coordinate, specie : Specie }
+
+
 type CellContent
     = Empty
     | Hero
+    | Monster Specie
+
+
+type Specie
+    = Dummy
 
 
 type PlayerInput

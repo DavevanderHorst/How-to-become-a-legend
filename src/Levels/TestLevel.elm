@@ -2,9 +2,9 @@ module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
-import Functions.PlayField.Insert exposing (trySetHeroInPlayField)
-import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
-import Models exposing (Cell, CellContent(..), Coordinate, Error, Level)
+import Functions.PlayField.Insert exposing (trySetHeroInPlayField, trySetMonstersInPlayField)
+import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Models exposing (Cell, CellContent(..), Coordinate, Error, Level, MonsterModel, Specie(..))
 
 
 rows : Int
@@ -22,6 +22,21 @@ heroStartSpot =
     { columnNumber = 5, rowNumber = 4 }
 
 
+monsterSpots : List MonsterModel
+monsterSpots =
+    [ monsterOne, monsterTwo ]
+
+
+monsterOne : MonsterModel
+monsterOne =
+    { coordinate = Coordinate 8 2, specie = Dummy }
+
+
+monsterTwo : MonsterModel
+monsterTwo =
+    { coordinate = Coordinate 3 7, specie = Dummy }
+
+
 createTestLevel : Result Error Level
 createTestLevel =
     let
@@ -34,14 +49,23 @@ createTestLevel =
     case playFieldWithHeroResult of
         Ok playFieldWithHero ->
             let
-                playFieldWidth =
-                    -- last column and row doesnt need the between squares size
-                    (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
-
-                playFieldHeight =
-                    (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+                playFieldWithHeroAndMonstersResult =
+                    trySetMonstersInPlayField monsterSpots playFieldWithHero
             in
-            Ok (Level playFieldWithHero heroStartSpot playFieldWidth playFieldHeight)
+            case playFieldWithHeroAndMonstersResult of
+                Ok playFieldWithHeroAndMonsters ->
+                    let
+                        playFieldWidth =
+                            -- last column and row doesnt need the between squares size
+                            (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+
+                        playFieldHeight =
+                            (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+                    in
+                    Ok (Level playFieldWithHeroAndMonsters heroStartSpot playFieldWidth playFieldHeight)
+
+                Err error ->
+                    Err { error | method = "createTestLevel " ++ error.method, error = "Adding monsters to playField failed. " ++ error.error }
 
         Err error ->
             Err { error | method = "createTestLevel " ++ error.method, error = "Adding hero to playField failed. " ++ error.error }
@@ -61,7 +85,7 @@ generatePlayFieldColumns : Int -> Int -> Dict String Cell -> Dict String Cell
 generatePlayFieldColumns rowNumber colNumber playField =
     let
         key =
-            makeDictKeyFromCoordinate (Coordinate colNumber rowNumber)
+            makePlayFieldDictKeyFromCoordinate (Coordinate colNumber rowNumber)
 
         gridX =
             -- total size of a cell * (column number - 1)
