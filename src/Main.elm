@@ -1,8 +1,9 @@
-module Main exposing (init, keyDecoder, main, subscriptions)
+port module Main exposing (init, keyDecoder, main, subscriptions)
 
 import Browser
 import Browser.Dom
 import Browser.Events exposing (onResize)
+import Constants.Sounds exposing (bumpInWallSound)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (moveHeroToNextCoordinateInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
@@ -14,6 +15,9 @@ import MainView exposing (mainView)
 import Messages exposing (Msg(..))
 import Models exposing (CellContent(..), Direction(..), Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
 import Task
+
+
+port playMusic : String -> Cmd msg
 
 
 main =
@@ -140,8 +144,9 @@ handlePressedArrowDirection direction model =
     case nextCellResult of
         Err _ ->
             -- no cell found in direction
-            -- TODO make error sound
-            ( { model | playerInput = Possible }, Cmd.none )
+            ( { model | playerInput = Possible }
+            , playMusic bumpInWallSound
+            )
 
         Ok nextCell ->
             -- found a cell, now we check if it possible to move too, or if monster so we now if we move or attack.

@@ -2,12 +2,12 @@ module MainView exposing (..)
 
 import Constants.FieldSizes exposing (squareSize)
 import Dict exposing (Dict)
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (style)
-import Messages exposing (Msg)
+import Html exposing (Html, audio, div, text)
+import Html.Attributes exposing (id, style)
+import Messages exposing (Msg(..))
 import Models exposing (Cell, CellContent(..), MainModel)
 import Svg exposing (Attribute, Svg)
-import Svg.Attributes as SvgAttr
+import Svg.Attributes as SvgAttr exposing (visibility)
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
 
 
@@ -39,6 +39,7 @@ mainView model =
                     , style "background-color" "black"
                     ]
                     [ Svg.g [] (drawCells model.level.playField) ]
+                , audio [ id "audio-player", visibility "hidden" ] []
                 ]
 
         Just error ->
@@ -67,7 +68,7 @@ drawCell _ cell svgList =
         Hero ->
             let
                 imageAttributes =
-                    SvgAttr.xlinkHref "Images/swordsmanNoBg.png" :: baseGridCellAttributes
+                    SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: baseGridCellAttributes
             in
             baseRect :: Svg.image imageAttributes [] :: svgList
 
@@ -76,7 +77,7 @@ drawCell _ cell svgList =
                 imageLink =
                     case specie of
                         Models.Dummy ->
-                            "Images/dummyNoBg.png"
+                            "assets/images/dummyNoBg.png"
 
                 imageAttributes =
                     SvgAttr.xlinkHref imageLink :: baseGridCellAttributes
