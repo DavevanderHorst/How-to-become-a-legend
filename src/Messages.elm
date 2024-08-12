@@ -9,3 +9,4 @@ type Msg
     | GotNewSize Int Int
     | KeyPressed String
     | HandleKeyPressed PressedKey
+    | MoveAnimationIsDone

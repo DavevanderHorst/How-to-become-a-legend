@@ -4,14 +4,21 @@ import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroI
 import Models exposing (Coordinate, Level)
 
 
-moveHeroToNextCoordinateInLevel : Coordinate -> Level -> Level
-moveHeroToNextCoordinateInLevel nextCoordinate level =
+setHeroInLevel : Level -> Level
+setHeroInLevel level =
+    -- unsafe, notting will be checked.
+    let
+        playFieldWithHero =
+            setHeroInPlayFieldUnsafe level.heroCoordinate level.playField
+    in
+    { level | playField = playFieldWithHero }
+
+
+removeHeroFromLevel : Level -> Level
+removeHeroFromLevel level =
     -- unsafe, notting will be checked.
     let
         playFieldWithoutHero =
             removeHeroFromPlayFieldUnsafe level.heroCoordinate level.playField
-
-        playFieldWithHero =
-            setHeroInPlayFieldUnsafe nextCoordinate playFieldWithoutHero
     in
-    { level | playField = playFieldWithHero, heroCoordinate = nextCoordinate }
+    { level | playField = playFieldWithoutHero }

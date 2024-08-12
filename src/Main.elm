@@ -4,8 +4,10 @@ import Browser
 import Browser.Dom
 import Browser.Events exposing (onResize)
 import Constants.Sounds exposing (bumpInWallSound)
+import Constants.Times exposing (moveAnimationDuration)
+import Functions.Animations.Move exposing (makeMoveAnimation)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
-import Functions.Level exposing (moveHeroToNextCoordinateInLevel)
+import Functions.Level exposing (removeHeroFromLevel, setHeroInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Functions.ToString exposing (coordinateToString)
@@ -13,7 +15,8 @@ import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
 import MainView exposing (mainView)
 import Messages exposing (Msg(..))
-import Models exposing (CellContent(..), Direction(..), Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
+import Models exposing (AnimationType(..), CellContent(..), Direction(..), Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
+import Process
 import Task
 
 
@@ -76,6 +79,16 @@ update msg model =
 
         HandleKeyPressed pressedKey ->
             handlePressedKey pressedKey model
+
+        MoveAnimationIsDone ->
+            let
+                updatedLevel =
+                    setHeroInLevel model.level
+
+                finishedLevel =
+                    { updatedLevel | currentAnimation = NoAnimation }
+            in
+            ( { model | level = finishedLevel, playerInput = Possible }, Cmd.none )
 
 
 handleScreenSize : Float -> Float -> MainModel -> ( MainModel, Cmd Msg )
@@ -152,11 +165,42 @@ handlePressedArrowDirection direction model =
             -- found a cell, now we check if it possible to move too, or if monster so we now if we move or attack.
             case nextCell.content of
                 Empty ->
+                    -- we can move
+                    -- set move animation, for this we also need the current hero cell.
                     let
-                        updatedLevel =
-                            moveHeroToNextCoordinateInLevel nextCoordinate model.level
+                        level =
+                            model.level
+
+                        currentHeroCellResult =
+                            tryGetCellFromPlayField (makePlayFieldDictKeyFromCoordinate level.heroCoordinate) level.playField
                     in
-                    ( { model | level = updatedLevel }, Cmd.none )
+                    case currentHeroCellResult of
+                        -- we remove hero from play field, and set the new coordinate as hero coordinate
+                        -- if move animation is finished, we set hero on this new spot.
+                        Ok currentHeroCell ->
+                            let
+                                updatedLevel =
+                                    removeHeroFromLevel level
+
+                                moveAnimation =
+                                    makeMoveAnimation currentHeroCell nextCell
+
+                                finishedLevel =
+                                    { updatedLevel | heroCoordinate = nextCell.coordinate, currentAnimation = moveAnimation }
+
+                                nextCommand =
+                                    Process.sleep (toFloat <| moveAnimationDuration) |> Task.perform (always MoveAnimationIsDone)
+                            in
+                            ( { model | level = finishedLevel, playerInput = Stopped }, nextCommand )
+
+                        Err error ->
+                            let
+                                newError =
+                                    { method = "TODO"
+                                    , error = "Failed to make move animation, currentHeroCell is not found in our play field."
+                                    }
+                            in
+                            ( { model | error = Just newError }, Cmd.none )
 
                 Hero ->
                     let

@@ -21,16 +21,17 @@ type alias Error =
 
 
 type alias Level =
-    { playField : Dict String Cell
-    , heroCoordinate : Coordinate
-    , playFieldWidth : Int
+    { playFieldWidth : Int
     , playFieldHeight : Int
+    , playField : Dict String Cell
+    , heroCoordinate : Coordinate
+    , currentAnimation : AnimationType
     }
 
 
 emptyLevel : Level
 emptyLevel =
-    Level Dict.empty (Coordinate 1 1) 1 1
+    Level 1 1 Dict.empty (Coordinate 1 1) NoAnimation
 
 
 type alias Cell =
@@ -81,6 +82,11 @@ type Direction
     | Down
     | Right
     | Left
+
+
+type AnimationType
+    = NoAnimation
+    | AnimationMove Coordinate Coordinate
 
 
 startSize : Size

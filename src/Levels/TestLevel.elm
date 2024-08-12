@@ -4,7 +4,7 @@ import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, tota
 import Dict exposing (Dict)
 import Functions.PlayField.Insert exposing (trySetHeroInPlayField, trySetMonstersInPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
-import Models exposing (Cell, CellContent(..), Coordinate, Error, Level, MonsterModel, Specie(..))
+import Models exposing (AnimationType(..), Cell, CellContent(..), Coordinate, Error, Level, MonsterModel, Specie(..))
 
 
 rows : Int
@@ -62,7 +62,7 @@ createTestLevel =
                         playFieldHeight =
                             (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
                     in
-                    Ok (Level playFieldWithHeroAndMonsters heroStartSpot playFieldWidth playFieldHeight)
+                    Ok (Level playFieldWidth playFieldHeight playFieldWithHeroAndMonsters heroStartSpot NoAnimation)
 
                 Err error ->
                     Err { error | method = "createTestLevel " ++ error.method, error = "Adding monsters to playField failed. " ++ error.error }

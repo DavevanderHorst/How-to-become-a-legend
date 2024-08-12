@@ -1,11 +1,15 @@
 module MainView exposing (..)
 
 import Constants.FieldSizes exposing (squareSize)
+import Constants.Times exposing (moveAnimationDuration)
 import Dict exposing (Dict)
 import Html exposing (Html, audio, div, text)
 import Html.Attributes exposing (id, style)
 import Messages exposing (Msg(..))
-import Models exposing (Cell, CellContent(..), MainModel)
+import Models exposing (AnimationType(..), Cell, CellContent(..), Coordinate, Level, MainModel)
+import Simple.Animation as Animation exposing (Animation, Step)
+import Simple.Animation.Animated as Animated
+import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
@@ -38,7 +42,7 @@ mainView model =
                     , style "height" (makePxStringFromInt model.level.playFieldHeight)
                     , style "background-color" "black"
                     ]
-                    [ Svg.g [] (drawCells model.level.playField) ]
+                    [ Svg.g [] (drawLevel model.level) ]
                 , audio [ id "audio-player", visibility "hidden" ] []
                 ]
 
@@ -46,9 +50,49 @@ mainView model =
             div [] [ div [] [ text error.method ], div [] [ text error.error ] ]
 
 
-drawCells : Dict String Cell -> List (Svg Msg)
-drawCells cellDict =
-    Dict.foldl drawCell [] cellDict
+drawLevel : Level -> List (Svg Msg)
+drawLevel level =
+    -- animation must be first in the list, so it will be rendered last.
+    let
+        startSvgList =
+            handleAnimationType level.currentAnimation
+    in
+    Dict.foldl drawCell startSvgList level.playField
+
+
+handleAnimationType : AnimationType -> List (Svg Msg)
+handleAnimationType animation =
+    case animation of
+        NoAnimation ->
+            []
+
+        AnimationMove start end ->
+            [ animatedG (moveAnimation start end) [] [ renderHeroCell baseCellAttributes ] ]
+
+
+moveAnimation : Coordinate -> Coordinate -> Animation
+moveAnimation start end =
+    Animation.steps
+        { startAt = [ P.x (toFloat start.columnNumber), P.y (toFloat start.rowNumber) ]
+        , options = []
+        }
+        [ makeAnimationStep end ]
+
+
+makeAnimationStep : Coordinate -> Step
+makeAnimationStep coordinate =
+    Animation.step moveAnimationDuration [ P.x (toFloat coordinate.columnNumber), P.y (toFloat coordinate.rowNumber) ]
+
+
+animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
+animatedG =
+    animatedSvg Svg.g
+
+
+animatedSvg =
+    Animated.svg
+        { class = SvgAttr.class
+        }
 
 
 drawCell : String -> Cell -> List (Svg Msg) -> List (Svg Msg)
@@ -66,11 +110,7 @@ drawCell _ cell svgList =
             baseRect :: svgList
 
         Hero ->
-            let
-                imageAttributes =
-                    SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: baseGridCellAttributes
-            in
-            baseRect :: Svg.image imageAttributes [] :: svgList
+            baseRect :: renderHeroCell baseGridCellAttributes :: svgList
 
         Monster specie ->
             let
@@ -85,15 +125,30 @@ drawCell _ cell svgList =
             baseRect :: Svg.image imageAttributes [] :: svgList
 
 
+renderHeroCell : List (Attribute msg) -> Svg msg
+renderHeroCell attr =
+    let
+        attributes =
+            SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: attr
+    in
+    Svg.image attributes []
+
+
 makeBaseGridCellAttributes : Cell -> List (Attribute msg)
 makeBaseGridCellAttributes cell =
+    [ SvgAttr.x (makePxStringFromInt cell.gridX)
+    , SvgAttr.y (makePxStringFromInt cell.gridY)
+    , SvgAttr.fill "white"
+    ]
+        ++ baseCellAttributes
+
+
+baseCellAttributes : List (Attribute msg)
+baseCellAttributes =
     let
         squareSizeInPixelString =
             makePxStringFromInt squareSize
     in
     [ SvgAttr.width squareSizeInPixelString
     , SvgAttr.height squareSizeInPixelString
-    , SvgAttr.x (makePxStringFromInt cell.gridX)
-    , SvgAttr.y (makePxStringFromInt cell.gridY)
-    , SvgAttr.fill "white"
     ]
