@@ -3,9 +3,9 @@ port module Main exposing (init, keyDecoder, main, subscriptions)
 import Browser
 import Browser.Dom
 import Browser.Events exposing (onResize)
-import Constants.Sounds exposing (bumpInWallSound)
-import Constants.Times exposing (moveAnimationDuration)
-import Functions.Animations.Move exposing (makeMoveAnimation)
+import Constants.Sounds exposing (bumpInWallSound, heroAttackSound)
+import Constants.Times exposing (attackAnimationDuration, moveAnimationDuration)
+import Functions.Animations.Hero exposing (makeAttackAnimation, makeMoveAnimation)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromLevel, setHeroInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
@@ -80,7 +80,8 @@ update msg model =
         HandleKeyPressed pressedKey ->
             handlePressedKey pressedKey model
 
-        MoveAnimationIsDone ->
+        HeroAnimationIsDone ->
+            -- hero is removed for the animation, so needs to be set back.
             let
                 updatedLevel =
                     setHeroInLevel model.level
@@ -189,15 +190,15 @@ handlePressedArrowDirection direction model =
                                     { updatedLevel | heroCoordinate = nextCell.coordinate, currentAnimation = moveAnimation }
 
                                 nextCommand =
-                                    Process.sleep (toFloat <| moveAnimationDuration) |> Task.perform (always MoveAnimationIsDone)
+                                    Process.sleep (toFloat <| moveAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
                             in
                             ( { model | level = finishedLevel, playerInput = Stopped }, nextCommand )
 
                         Err error ->
                             let
                                 newError =
-                                    { method = "TODO"
-                                    , error = "Failed to make move animation, currentHeroCell is not found in our play field."
+                                    { method = "handlePressedArrowDirection - " ++ error.method
+                                    , error = "Failed to make move animation, currentHeroCell is not found in our play field. - " ++ error.error
                                     }
                             in
                             ( { model | error = Just newError }, Cmd.none )
@@ -213,11 +214,44 @@ handlePressedArrowDirection direction model =
 
                 Monster specie ->
                     -- we move into a monster, so attack!!
-                    -- TODO
+                    -- make an attack animation
+                    -- we need current hero cell again for screen positions
+                    -- make a sound
+                    -- show damage above monster head
                     let
-                        newError =
-                            { method = "TODO"
-                            , error = "Moved into a monster"
-                            }
+                        level =
+                            model.level
+
+                        currentHeroCellResult =
+                            tryGetCellFromPlayField (makePlayFieldDictKeyFromCoordinate level.heroCoordinate) level.playField
                     in
-                    ( { model | error = Just newError }, Cmd.none )
+                    case currentHeroCellResult of
+                        Ok currentHeroCell ->
+                            let
+                                updatedLevel =
+                                    removeHeroFromLevel level
+
+                                attackAnimation =
+                                    makeAttackAnimation currentHeroCell nextCell
+
+                                finishedLevel =
+                                    { updatedLevel | currentAnimation = attackAnimation }
+
+                                animationIsDoneCommand =
+                                    Process.sleep (toFloat <| attackAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
+
+                                playSoundCommand =
+                                    playMusic heroAttackSound
+                            in
+                            ( { model | level = finishedLevel, playerInput = Stopped }
+                            , Cmd.batch [ animationIsDoneCommand, playSoundCommand ]
+                            )
+
+                        Err error ->
+                            let
+                                newError =
+                                    { method = "handlePressedArrowDirection - " ++ error.method
+                                    , error = "Failed to make move animation, currentHeroCell is not found in our play field. - " ++ error.error
+                                    }
+                            in
+                            ( { model | error = Just newError }, Cmd.none )

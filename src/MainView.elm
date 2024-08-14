@@ -1,15 +1,13 @@
 module MainView exposing (..)
 
 import Constants.FieldSizes exposing (squareSize)
-import Constants.Times exposing (moveAnimationDuration)
 import Dict exposing (Dict)
 import Html exposing (Html, audio, div, text)
 import Html.Attributes exposing (id, style)
 import Messages exposing (Msg(..))
 import Models exposing (AnimationType(..), Cell, CellContent(..), Coordinate, Level, MainModel)
-import Simple.Animation as Animation exposing (Animation, Step)
+import Simple.Animation exposing (Animation, Step)
 import Simple.Animation.Animated as Animated
-import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
@@ -61,27 +59,13 @@ drawLevel level =
 
 
 handleAnimationType : AnimationType -> List (Svg Msg)
-handleAnimationType animation =
-    case animation of
+handleAnimationType animationType =
+    case animationType of
         NoAnimation ->
             []
 
-        AnimationMove start end ->
-            [ animatedG (moveAnimation start end) [] [ renderHeroCell baseCellAttributes ] ]
-
-
-moveAnimation : Coordinate -> Coordinate -> Animation
-moveAnimation start end =
-    Animation.steps
-        { startAt = [ P.x (toFloat start.columnNumber), P.y (toFloat start.rowNumber) ]
-        , options = []
-        }
-        [ makeAnimationStep end ]
-
-
-makeAnimationStep : Coordinate -> Step
-makeAnimationStep coordinate =
-    Animation.step moveAnimationDuration [ P.x (toFloat coordinate.columnNumber), P.y (toFloat coordinate.rowNumber) ]
+        HeroAnimation animation ->
+            [ animatedG animation [] [ renderHeroCell baseCellAttributes ] ]
 
 
 animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg

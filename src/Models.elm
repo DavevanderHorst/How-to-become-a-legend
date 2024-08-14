@@ -1,6 +1,7 @@
 module Models exposing (..)
 
 import Dict exposing (Dict)
+import Simple.Animation exposing (Animation)
 
 
 type alias MainModel =
@@ -86,7 +87,7 @@ type Direction
 
 type AnimationType
     = NoAnimation
-    | AnimationMove Coordinate Coordinate
+    | HeroAnimation Animation
 
 
 startSize : Size

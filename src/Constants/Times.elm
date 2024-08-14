@@ -5,4 +5,14 @@ module Constants.Times exposing (..)
 
 moveAnimationDuration : Int
 moveAnimationDuration =
-    300
+    200
+
+
+attackAnimationDuration : Int
+attackAnimationDuration =
+    halfAttackAnimationDuration * 2
+
+
+halfAttackAnimationDuration : Int
+halfAttackAnimationDuration =
+    250
