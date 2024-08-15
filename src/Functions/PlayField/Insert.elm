@@ -4,7 +4,8 @@ import Dict exposing (Dict)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString, specieToString)
-import Models exposing (Cell, CellContent(..), Coordinate, Error, MonsterModel, Specie)
+import Models exposing (Cell, Coordinate, Error, MonsterModel)
+import Types exposing (CellContent(..), Specie)
 
 
 trySetMonstersInPlayField : List MonsterModel -> Dict String Cell -> Result Error (Dict String Cell)

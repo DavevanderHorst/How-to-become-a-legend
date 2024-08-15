@@ -1,6 +1,7 @@
 module Functions.ToString exposing (..)
 
-import Models exposing (CellContent(..), Coordinate, Specie(..))
+import Models exposing (Coordinate)
+import Types exposing (CellContent(..), Specie(..))
 
 
 coordinateToString : Coordinate -> String

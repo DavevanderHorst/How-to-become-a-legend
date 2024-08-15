@@ -1,14 +1,19 @@
-module Functions.Animations.Hero exposing (makeAttackAnimation, makeMoveAnimation)
+module Functions.Animations.Hero exposing (makeAttackAnimationSvgs, makeMoveAnimationSvgs)
 
-import Constants.Times exposing (halfAttackAnimationDuration, moveAnimationDuration)
-import Models exposing (AnimationType(..), Cell, Coordinate)
+import Constants.Times exposing (attackAnimationDuration, halfAttackAnimationDuration, moveAnimationDuration)
+import MainView exposing (baseCellAttributes, renderHeroCell)
+import Messages exposing (Msg)
+import Models exposing (Cell, Coordinate)
 import Simple.Animation exposing (Animation, Step, step, steps)
+import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
+import Svg exposing (Attribute, Svg)
+import Svg.Attributes as SvgAttr
 
 
-makeMoveAnimation : Cell -> Cell -> AnimationType
-makeMoveAnimation heroSpot nextSpot =
-    -- AnimationMove is using coordinates, but we are using the screen positions here.
+makeMoveAnimationSvgs : Cell -> Cell -> List (Svg Msg)
+makeMoveAnimationSvgs heroSpot nextSpot =
+    -- MoveAnimation is using coordinates, but we are using the screen positions here.
     let
         startCoordinate =
             Coordinate heroSpot.gridX heroSpot.gridY
@@ -16,11 +21,32 @@ makeMoveAnimation heroSpot nextSpot =
         endCoordinate =
             Coordinate nextSpot.gridX nextSpot.gridY
     in
-    HeroAnimation (moveAnimation startCoordinate endCoordinate)
+    [ animatedG (makeMoveAnimation startCoordinate endCoordinate) [] [ renderHeroCell baseCellAttributes ] ]
 
 
-moveAnimation : Coordinate -> Coordinate -> Animation
-moveAnimation start end =
+makeAttackAnimationSvgs : Cell -> Cell -> List (Svg Msg)
+makeAttackAnimationSvgs heroSpot nextSpot =
+    -- AttackAnimation is using coordinates, but we are using the screen positions here.
+    let
+        heroAttackAnimation =
+            animatedG (makeAttackAnimation heroSpot nextSpot) [] [ renderHeroCell baseCellAttributes ]
+
+        damageAnimation =
+            animatedG (makeDamageAnimation nextSpot) [] [ Svg.text_ textAttributes [ Svg.text "    -5" ] ]
+    in
+    [ heroAttackAnimation, damageAnimation ]
+
+
+textAttributes : List (Attribute msg)
+textAttributes =
+    [ SvgAttr.fill "red"
+    , SvgAttr.fontWeight "900"
+    , SvgAttr.fontFamily "fantasy"
+    ]
+
+
+makeMoveAnimation : Coordinate -> Coordinate -> Animation
+makeMoveAnimation start end =
     steps
         { startAt = [ P.x (toFloat start.columnNumber), P.y (toFloat start.rowNumber) ]
         , options = []
@@ -28,34 +54,52 @@ moveAnimation start end =
         [ makeAnimationStep end moveAnimationDuration ]
 
 
-makeAttackAnimation : Cell -> Cell -> AnimationType
-makeAttackAnimation heroSpot nextSpot =
-    -- AnimationMove is using coordinates, but we are using the screen positions here.
+makeAttackAnimation : Cell -> Cell -> Animation
+makeAttackAnimation heroCell monsterCell =
     let
-        startCoordinate =
-            Coordinate heroSpot.gridX heroSpot.gridY
-
         xDistanceToAttack =
-            (heroSpot.gridX - nextSpot.gridX) // 2
+            (heroCell.gridX - monsterCell.gridX) // 2
 
         yDistanceToAttack =
-            (heroSpot.gridY - nextSpot.gridY) // 2
+            (heroCell.gridY - monsterCell.gridY) // 2
+
+        startCoordinate =
+            Coordinate heroCell.gridX heroCell.gridY
 
         attackCoordinate =
-            Coordinate (heroSpot.gridX - xDistanceToAttack) (heroSpot.gridY - yDistanceToAttack)
+            Coordinate (heroCell.gridX - xDistanceToAttack) (heroCell.gridY - yDistanceToAttack)
     in
-    HeroAnimation (attackAnimation startCoordinate attackCoordinate)
-
-
-attackAnimation : Coordinate -> Coordinate -> Animation
-attackAnimation start end =
     steps
-        { startAt = [ P.x (toFloat start.columnNumber), P.y (toFloat start.rowNumber) ]
+        { startAt = [ P.x (toFloat heroCell.gridX), P.y (toFloat heroCell.gridY) ]
         , options = []
         }
-        [ makeAnimationStep end halfAttackAnimationDuration, makeAnimationStep start halfAttackAnimationDuration ]
+        [ makeAnimationStep attackCoordinate halfAttackAnimationDuration, makeAnimationStep startCoordinate halfAttackAnimationDuration ]
+
+
+makeDamageAnimation : Cell -> Animation
+makeDamageAnimation startCell =
+    let
+        ( startX, startY ) =
+            ( toFloat startCell.gridX, toFloat startCell.gridY )
+    in
+    steps
+        { startAt = [ P.x startX, P.y startY ]
+        , options = []
+        }
+        [ step attackAnimationDuration [ P.x startX, P.y startY, P.scale 2 ] ]
 
 
 makeAnimationStep : Coordinate -> Int -> Step
 makeAnimationStep coordinate duration =
     step duration [ P.x (toFloat coordinate.columnNumber), P.y (toFloat coordinate.rowNumber) ]
+
+
+animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
+animatedG =
+    animatedSvg Svg.g
+
+
+animatedSvg =
+    Animated.svg
+        { class = SvgAttr.class
+        }

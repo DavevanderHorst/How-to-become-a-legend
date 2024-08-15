@@ -5,7 +5,7 @@ import Browser.Dom
 import Browser.Events exposing (onResize)
 import Constants.Sounds exposing (bumpInWallSound, heroAttackSound)
 import Constants.Times exposing (attackAnimationDuration, moveAnimationDuration)
-import Functions.Animations.Hero exposing (makeAttackAnimation, makeMoveAnimation)
+import Functions.Animations.Hero exposing (makeAttackAnimationSvgs, makeMoveAnimationSvgs)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromLevel, setHeroInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
@@ -15,9 +15,10 @@ import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
 import MainView exposing (mainView)
 import Messages exposing (Msg(..))
-import Models exposing (AnimationType(..), CellContent(..), Direction(..), Level, MainModel, PlayerInput(..), PressedKey(..), Size, emptyLevel, startSize)
+import Models exposing (Level, MainModel, Size, emptyLevel, startSize)
 import Process
 import Task
+import Types exposing (CellContent(..), Direction(..), PlayerInput(..), PressedKey(..))
 
 
 port playMusic : String -> Cmd msg
@@ -87,7 +88,7 @@ update msg model =
                     setHeroInLevel model.level
 
                 finishedLevel =
-                    { updatedLevel | currentAnimation = NoAnimation }
+                    { updatedLevel | currentAnimations = [] }
             in
             ( { model | level = finishedLevel, playerInput = Possible }, Cmd.none )
 
@@ -184,10 +185,10 @@ handlePressedArrowDirection direction model =
                                     removeHeroFromLevel level
 
                                 moveAnimation =
-                                    makeMoveAnimation currentHeroCell nextCell
+                                    makeMoveAnimationSvgs currentHeroCell nextCell
 
                                 finishedLevel =
-                                    { updatedLevel | heroCoordinate = nextCell.coordinate, currentAnimation = moveAnimation }
+                                    { updatedLevel | heroCoordinate = nextCell.coordinate, currentAnimations = moveAnimation }
 
                                 nextCommand =
                                     Process.sleep (toFloat <| moveAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
@@ -231,11 +232,11 @@ handlePressedArrowDirection direction model =
                                 updatedLevel =
                                     removeHeroFromLevel level
 
-                                attackAnimation =
-                                    makeAttackAnimation currentHeroCell nextCell
+                                animations =
+                                    makeAttackAnimationSvgs currentHeroCell nextCell
 
                                 finishedLevel =
-                                    { updatedLevel | currentAnimation = attackAnimation }
+                                    { updatedLevel | currentAnimations = animations }
 
                                 animationIsDoneCommand =
                                     Process.sleep (toFloat <| attackAnimationDuration) |> Task.perform (always HeroAnimationIsDone)

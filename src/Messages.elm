@@ -1,7 +1,7 @@
 module Messages exposing (..)
 
 import Browser.Dom exposing (Viewport)
-import Models exposing (PressedKey)
+import Types exposing (PressedKey)
 
 
 type Msg

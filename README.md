@@ -2,9 +2,6 @@
 rogue like game
 
 Next programming steps.
-
-make an attack animation. Move hero halfway too enemy, maybe with some tilting.
-make an attack sound.
     
 show damage above head of monster.
 roll damage for real.
@@ -22,3 +19,8 @@ then open index.html with any explorer
 
 
 to view errors, use elm reactor and open Main.elm
+
+
+ -- THINGS TODO - if we feel like it
+ 
+- attack animation, tilt back, tilt forward

@@ -5,11 +5,10 @@ import Dict exposing (Dict)
 import Html exposing (Html, audio, div, text)
 import Html.Attributes exposing (id, style)
 import Messages exposing (Msg(..))
-import Models exposing (AnimationType(..), Cell, CellContent(..), Coordinate, Level, MainModel)
-import Simple.Animation exposing (Animation, Step)
-import Simple.Animation.Animated as Animated
+import Models exposing (Cell, Coordinate, Level, MainModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
+import Types exposing (CellContent(..), Specie(..))
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
 
 
@@ -40,7 +39,7 @@ mainView model =
                     , style "height" (makePxStringFromInt model.level.playFieldHeight)
                     , style "background-color" "black"
                     ]
-                    [ Svg.g [] (drawLevel model.level) ]
+                    (drawLevel model.level)
                 , audio [ id "audio-player", visibility "hidden" ] []
                 ]
 
@@ -50,33 +49,12 @@ mainView model =
 
 drawLevel : Level -> List (Svg Msg)
 drawLevel level =
-    -- animation must be first in the list, so it will be rendered last.
+    -- animation must be first in the list, so that it will be rendered last.
     let
         startSvgList =
-            handleAnimationType level.currentAnimation
+            level.currentAnimations
     in
     Dict.foldl drawCell startSvgList level.playField
-
-
-handleAnimationType : AnimationType -> List (Svg Msg)
-handleAnimationType animationType =
-    case animationType of
-        NoAnimation ->
-            []
-
-        HeroAnimation animation ->
-            [ animatedG animation [] [ renderHeroCell baseCellAttributes ] ]
-
-
-animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
-animatedG =
-    animatedSvg Svg.g
-
-
-animatedSvg =
-    Animated.svg
-        { class = SvgAttr.class
-        }
 
 
 drawCell : String -> Cell -> List (Svg Msg) -> List (Svg Msg)
@@ -100,7 +78,7 @@ drawCell _ cell svgList =
             let
                 imageLink =
                     case specie of
-                        Models.Dummy ->
+                        Dummy ->
                             "assets/images/dummyNoBg.png"
 
                 imageAttributes =

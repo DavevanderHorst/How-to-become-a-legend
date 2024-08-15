@@ -1,6 +1,7 @@
 module Functions.Coordinate exposing (..)
 
-import Models exposing (Coordinate, Direction(..), Error)
+import Models exposing (Coordinate, Error)
+import Types exposing (Direction(..))
 
 
 getNextCoordinateForDirection : Direction -> Coordinate -> Coordinate

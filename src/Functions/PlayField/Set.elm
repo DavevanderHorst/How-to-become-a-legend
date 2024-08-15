@@ -2,7 +2,8 @@ module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroI
 
 import Dict exposing (Dict)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
-import Models exposing (Cell, CellContent(..), Coordinate)
+import Models exposing (Cell, Coordinate)
+import Types exposing (CellContent(..))
 
 
 setHeroInPlayFieldUnsafe : Coordinate -> Dict String Cell -> Dict String Cell

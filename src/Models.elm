@@ -1,7 +1,9 @@
 module Models exposing (..)
 
 import Dict exposing (Dict)
-import Simple.Animation exposing (Animation)
+import Messages exposing (Msg)
+import Svg exposing (Svg)
+import Types exposing (CellContent, PlayerInput, Specie)
 
 
 type alias MainModel =
@@ -26,13 +28,13 @@ type alias Level =
     , playFieldHeight : Int
     , playField : Dict String Cell
     , heroCoordinate : Coordinate
-    , currentAnimation : AnimationType
+    , currentAnimations : List (Svg Msg)
     }
 
 
 emptyLevel : Level
 emptyLevel =
-    Level 1 1 Dict.empty (Coordinate 1 1) NoAnimation
+    Level 1 1 Dict.empty (Coordinate 1 1) []
 
 
 type alias Cell =
@@ -55,41 +57,10 @@ type alias Size =
     }
 
 
-type alias MonsterModel =
-    { coordinate : Coordinate, specie : Specie }
-
-
-type CellContent
-    = Empty
-    | Hero
-    | Monster Specie
-
-
-type Specie
-    = Dummy
-
-
-type PlayerInput
-    = Stopped
-    | Possible
-
-
-type PressedKey
-    = Arrow Direction
-
-
-type Direction
-    = Up
-    | Down
-    | Right
-    | Left
-
-
-type AnimationType
-    = NoAnimation
-    | HeroAnimation Animation
-
-
 startSize : Size
 startSize =
     Size 0 0
+
+
+type alias MonsterModel =
+    { coordinate : Coordinate, specie : Specie }
