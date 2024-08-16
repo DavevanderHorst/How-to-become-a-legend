@@ -6,6 +6,11 @@ squareSize =
     50
 
 
+halfSquareSize : Int
+halfSquareSize =
+    squareSize // 2
+
+
 betweenSquaresSize : Int
 betweenSquaresSize =
     3

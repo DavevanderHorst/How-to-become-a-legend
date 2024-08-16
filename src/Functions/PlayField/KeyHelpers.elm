@@ -1,6 +1,6 @@
 module Functions.PlayField.KeyHelpers exposing (..)
 
-import Models exposing (Coordinate)
+import Models.Cell exposing (Coordinate)
 
 
 makePlayFieldDictKeyFromCoordinate : Coordinate -> String

@@ -1,6 +1,6 @@
 module Functions.Coordinate exposing (..)
 
-import Models exposing (Coordinate, Error)
+import Models.Cell exposing (Coordinate)
 import Types exposing (Direction(..))
 
 

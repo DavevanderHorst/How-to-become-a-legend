@@ -4,7 +4,11 @@ import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, tota
 import Dict exposing (Dict)
 import Functions.PlayField.Insert exposing (trySetHeroInPlayField, trySetMonstersInPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
-import Models exposing (Cell, Coordinate, Error, Level, MonsterModel)
+import Models.Cell exposing (Cell, Coordinate)
+import Models.Hero exposing (HeroModel)
+import Models.Level exposing (Level)
+import Models.MainModel exposing (Error)
+import Models.Monster exposing (MonsterModel)
 import Types exposing (CellContent(..), Specie(..))
 
 
@@ -18,9 +22,9 @@ columns =
     20
 
 
-heroStartSpot : Coordinate
-heroStartSpot =
-    { columnNumber = 5, rowNumber = 4 }
+heroStartModel : HeroModel
+heroStartModel =
+    { coordinate = Coordinate 7 2 }
 
 
 monsterSpots : List MonsterModel
@@ -45,7 +49,7 @@ createTestLevel =
             generateTestPlayField
 
         playFieldWithHeroResult =
-            trySetHeroInPlayField heroStartSpot basePlayField
+            trySetHeroInPlayField heroStartModel.coordinate basePlayField
     in
     case playFieldWithHeroResult of
         Ok playFieldWithHero ->
@@ -63,7 +67,7 @@ createTestLevel =
                         playFieldHeight =
                             (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
                     in
-                    Ok (Level playFieldWidth playFieldHeight playFieldWithHeroAndMonsters heroStartSpot [])
+                    Ok (Level playFieldWidth playFieldHeight playFieldWithHeroAndMonsters heroStartModel [])
 
                 Err error ->
                     Err { error | method = "createTestLevel " ++ error.method, error = "Adding monsters to playField failed. " ++ error.error }

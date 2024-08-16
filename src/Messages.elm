@@ -1,6 +1,7 @@
 module Messages exposing (..)
 
 import Browser.Dom exposing (Viewport)
+import Models.Cell exposing (Cell)
 import Types exposing (PressedKey)
 
 
@@ -10,3 +11,5 @@ type Msg
     | KeyPressed String
     | HandleKeyPressed PressedKey
     | HeroAnimationIsDone
+    | HeroAttacks Cell Int
+    | MonstersTurn

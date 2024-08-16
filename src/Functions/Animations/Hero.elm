@@ -1,9 +1,10 @@
 module Functions.Animations.Hero exposing (makeAttackAnimationSvgs, makeMoveAnimationSvgs)
 
+import Constants.FieldSizes exposing (halfSquareSize)
 import Constants.Times exposing (attackAnimationDuration, halfAttackAnimationDuration, moveAnimationDuration)
 import MainView exposing (baseCellAttributes, renderHeroCell)
 import Messages exposing (Msg)
-import Models exposing (Cell, Coordinate)
+import Models.Cell exposing (Cell, Coordinate)
 import Simple.Animation exposing (Animation, Step, step, steps)
 import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
@@ -24,15 +25,15 @@ makeMoveAnimationSvgs heroSpot nextSpot =
     [ animatedG (makeMoveAnimation startCoordinate endCoordinate) [] [ renderHeroCell baseCellAttributes ] ]
 
 
-makeAttackAnimationSvgs : Cell -> Cell -> List (Svg Msg)
-makeAttackAnimationSvgs heroSpot nextSpot =
+makeAttackAnimationSvgs : Cell -> Cell -> Int -> List (Svg Msg)
+makeAttackAnimationSvgs heroSpot nextSpot damage =
     -- AttackAnimation is using coordinates, but we are using the screen positions here.
     let
         heroAttackAnimation =
             animatedG (makeAttackAnimation heroSpot nextSpot) [] [ renderHeroCell baseCellAttributes ]
 
         damageAnimation =
-            animatedG (makeDamageAnimation nextSpot) [] [ Svg.text_ textAttributes [ Svg.text "    -5" ] ]
+            animatedG (makeDamageAnimation nextSpot) [] [ Svg.text_ textAttributes [ Svg.text (String.fromInt damage) ] ]
     in
     [ heroAttackAnimation, damageAnimation ]
 
@@ -40,8 +41,9 @@ makeAttackAnimationSvgs heroSpot nextSpot =
 textAttributes : List (Attribute msg)
 textAttributes =
     [ SvgAttr.fill "red"
-    , SvgAttr.fontWeight "900"
-    , SvgAttr.fontFamily "fantasy"
+    , SvgAttr.fontWeight "950"
+    , SvgAttr.fontFamily "Helvetica"
+    , SvgAttr.stroke "white"
     ]
 
 
@@ -80,13 +82,13 @@ makeDamageAnimation : Cell -> Animation
 makeDamageAnimation startCell =
     let
         ( startX, startY ) =
-            ( toFloat startCell.gridX, toFloat startCell.gridY )
+            ( toFloat startCell.gridX, toFloat (startCell.gridY + halfSquareSize) )
     in
     steps
         { startAt = [ P.x startX, P.y startY ]
         , options = []
         }
-        [ step attackAnimationDuration [ P.x startX, P.y startY, P.scale 2 ] ]
+        [ step attackAnimationDuration [ P.x startX, P.y startY, P.scale 3 ] ]
 
 
 makeAnimationStep : Coordinate -> Int -> Step

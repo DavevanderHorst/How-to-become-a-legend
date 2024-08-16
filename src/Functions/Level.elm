@@ -1,24 +1,24 @@
 module Functions.Level exposing (..)
 
 import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe)
-import Models exposing (Coordinate, Level)
+import Models.Level exposing (Level)
 
 
-setHeroInLevel : Level -> Level
-setHeroInLevel level =
+setHeroInPlayFieldInLevel : Level -> Level
+setHeroInPlayFieldInLevel level =
     -- unsafe, notting will be checked.
     let
         playFieldWithHero =
-            setHeroInPlayFieldUnsafe level.heroCoordinate level.playField
+            setHeroInPlayFieldUnsafe level.heroModel.coordinate level.playField
     in
     { level | playField = playFieldWithHero }
 
 
-removeHeroFromLevel : Level -> Level
-removeHeroFromLevel level =
+removeHeroFromPlayFieldInLevel : Level -> Level
+removeHeroFromPlayFieldInLevel level =
     -- unsafe, notting will be checked.
     let
         playFieldWithoutHero =
-            removeHeroFromPlayFieldUnsafe level.heroCoordinate level.playField
+            removeHeroFromPlayFieldUnsafe level.heroModel.coordinate level.playField
     in
     { level | playField = playFieldWithoutHero }

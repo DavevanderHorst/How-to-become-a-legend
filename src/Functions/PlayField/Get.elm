@@ -1,7 +1,8 @@
 module Functions.PlayField.Get exposing (..)
 
 import Dict exposing (Dict)
-import Models exposing (Cell, Coordinate, Error)
+import Models.Cell exposing (Cell)
+import Models.MainModel exposing (Error)
 
 
 tryGetCellFromPlayField : String -> Dict String Cell -> Result Error Cell
