@@ -2,7 +2,7 @@ module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
-import Functions.PlayField.Insert exposing (trySetHeroInPlayField, trySetMonstersInPlayField)
+import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersInPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Hero exposing (HeroModel)
@@ -24,22 +24,27 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 7 2 }
+    { coordinate = Coordinate 2 2 }
 
 
-monsterSpots : List MonsterModel
-monsterSpots =
+monsterList : List MonsterModel
+monsterList =
     [ monsterOne, monsterTwo ]
+
+
+testLevelDummy : Specie
+testLevelDummy =
+    Dummy 1
 
 
 monsterOne : MonsterModel
 monsterOne =
-    { coordinate = Coordinate 8 2, specie = Dummy }
+    { coordinate = Coordinate 8 2, specie = testLevelDummy }
 
 
 monsterTwo : MonsterModel
 monsterTwo =
-    { coordinate = Coordinate 3 7, specie = Dummy }
+    { coordinate = Coordinate 3 7, specie = testLevelDummy }
 
 
 createTestLevel : Result Error Level
@@ -55,7 +60,7 @@ createTestLevel =
         Ok playFieldWithHero ->
             let
                 playFieldWithHeroAndMonstersResult =
-                    trySetMonstersInPlayField monsterSpots playFieldWithHero
+                    trySetMonstersInPlayField monsterList playFieldWithHero
             in
             case playFieldWithHeroAndMonstersResult of
                 Ok playFieldWithHeroAndMonsters ->
@@ -66,8 +71,12 @@ createTestLevel =
 
                         playFieldHeight =
                             (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+
+                        monsterDict =
+                            -- if monsters are successfully set in play field, then everything is oke.
+                            insertMonstersInMonsterDict monsterList Dict.empty
                     in
-                    Ok (Level playFieldWidth playFieldHeight playFieldWithHeroAndMonsters heroStartModel [])
+                    Ok (Level playFieldWidth playFieldHeight playFieldWithHeroAndMonsters heroStartModel monsterDict [])
 
                 Err error ->
                     Err { error | method = "createTestLevel " ++ error.method, error = "Adding monsters to playField failed. " ++ error.error }

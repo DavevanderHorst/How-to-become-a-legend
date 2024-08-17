@@ -7,12 +7,13 @@ Next programming steps.
 Make monster turn after hero moved.
     -- for this we need a list of monsters.
     -- then for each monster do their action
-first dummy only, they don't move, but attack for 1.
-Make a new monster, that one moves.
-monster will attack when next to hero, or move towards hero.
-Monster needs to know path of movement.
+    -- monsters have settled damage for now and always move towards hero or attack when next to it
+
 Give hero and monster hit-points. Damage removes hit-points.
 Make a monster death animation.
+Make pathfinding so monsters move towards lowest number
+Monster needs to know path of movement.
+
 
 
 

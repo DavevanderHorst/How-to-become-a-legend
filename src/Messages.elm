@@ -11,5 +11,6 @@ type Msg
     | KeyPressed String
     | HandleKeyPressed PressedKey
     | HeroAnimationIsDone
+    | MonsterAnimationsAreDone
     | HeroAttacks Cell Int
     | MonstersTurn

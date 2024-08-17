@@ -8,7 +8,7 @@ type CellContent
 
 
 type Specie
-    = Dummy
+    = Dummy Int
 
 
 type PlayerInput

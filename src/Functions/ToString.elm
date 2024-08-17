@@ -25,5 +25,5 @@ cellContentToString content =
 specieToString : Specie -> String
 specieToString specie =
     case specie of
-        Dummy ->
+        Dummy _ ->
             "Dummy"

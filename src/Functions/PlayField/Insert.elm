@@ -1,4 +1,4 @@
-module Functions.PlayField.Insert exposing (trySetHeroInPlayField, trySetMonstersInPlayField)
+module Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersInPlayField)
 
 import Dict exposing (Dict)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
@@ -8,6 +8,25 @@ import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Types exposing (CellContent(..), Specie)
+
+
+insertMonstersInMonsterDict : List MonsterModel -> Dict String MonsterModel -> Dict String MonsterModel
+insertMonstersInMonsterDict monsters dict =
+    List.foldl insertMonsterInToMonsterDict dict monsters
+
+
+insertMonsterInToMonsterDict : MonsterModel -> Dict String MonsterModel -> Dict String MonsterModel
+insertMonsterInToMonsterDict monster dict =
+    let
+        dictKey =
+            makePlayFieldDictKeyFromCoordinate monster.coordinate
+    in
+    insertIntoDict monster dictKey dict
+
+
+insertIntoDict : a -> String -> Dict String a -> Dict String a
+insertIntoDict a key dict =
+    Dict.insert key a dict
 
 
 trySetMonstersInPlayField : List MonsterModel -> Dict String Cell -> Result Error (Dict String Cell)

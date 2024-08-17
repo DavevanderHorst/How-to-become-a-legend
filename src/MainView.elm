@@ -77,16 +77,21 @@ drawCell _ cell svgList =
             baseRect :: renderHeroCell baseGridCellAttributes :: svgList
 
         Monster specie ->
-            let
-                imageLink =
-                    case specie of
-                        Dummy ->
-                            "assets/images/dummyNoBg.png"
+            baseRect :: renderMonsterCell specie baseGridCellAttributes :: svgList
 
-                imageAttributes =
-                    SvgAttr.xlinkHref imageLink :: baseGridCellAttributes
-            in
-            baseRect :: Svg.image imageAttributes [] :: svgList
+
+renderMonsterCell : Specie -> List (Attribute msg) -> Svg msg
+renderMonsterCell specie attr =
+    let
+        imageLink =
+            case specie of
+                Dummy _ ->
+                    "assets/images/dummyNoBg.png"
+
+        imageAttributes =
+            SvgAttr.xlinkHref imageLink :: attr
+    in
+    Svg.image imageAttributes []
 
 
 renderHeroCell : List (Attribute msg) -> Svg msg

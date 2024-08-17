@@ -1,6 +1,5 @@
 module Models.MainModel exposing (..)
 
-import Models.Cell exposing (Coordinate)
 import Models.Level exposing (Level)
 import Types exposing (CellContent, PlayerInput, Specie)
 

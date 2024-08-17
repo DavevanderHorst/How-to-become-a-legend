@@ -1,6 +1,6 @@
 module Functions.Level exposing (..)
 
-import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe)
+import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe)
 import Models.Level exposing (Level)
 
 
@@ -22,3 +22,13 @@ removeHeroFromPlayFieldInLevel level =
             removeHeroFromPlayFieldUnsafe level.heroModel.coordinate level.playField
     in
     { level | playField = playFieldWithoutHero }
+
+
+setMonstersInPlayFieldInLevel : Level -> Level
+setMonstersInPlayFieldInLevel level =
+    -- unsafe, notting will be checked.
+    let
+        playFieldWithMonsters =
+            setMonstersInPlayFieldUnsafe level.monsterModels level.playField
+    in
+    { level | playField = playFieldWithMonsters }

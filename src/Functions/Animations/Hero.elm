@@ -1,12 +1,12 @@
 module Functions.Animations.Hero exposing (makeAttackAnimationSvgs, makeMoveAnimationSvgs)
 
 import Constants.FieldSizes exposing (halfSquareSize)
-import Constants.Times exposing (attackAnimationDuration, halfAttackAnimationDuration, moveAnimationDuration)
+import Constants.Times exposing (halfHeroAttackAnimationDuration, heroAttackAnimationDuration, moveAnimationDuration)
+import Functions.Animations.Base exposing (animatedG, makeAnimationStep)
 import MainView exposing (baseCellAttributes, renderHeroCell)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
-import Simple.Animation exposing (Animation, Step, step, steps)
-import Simple.Animation.Animated as Animated
+import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr
@@ -33,13 +33,13 @@ makeAttackAnimationSvgs heroSpot nextSpot damage =
             animatedG (makeAttackAnimation heroSpot nextSpot) [] [ renderHeroCell baseCellAttributes ]
 
         damageAnimation =
-            animatedG (makeDamageAnimation nextSpot) [] [ Svg.text_ textAttributes [ Svg.text (String.fromInt damage) ] ]
+            animatedG (makeDamageAnimation nextSpot) [] [ Svg.text_ attackTextAttributes [ Svg.text (String.fromInt damage) ] ]
     in
     [ heroAttackAnimation, damageAnimation ]
 
 
-textAttributes : List (Attribute msg)
-textAttributes =
+attackTextAttributes : List (Attribute msg)
+attackTextAttributes =
     [ SvgAttr.fill "red"
     , SvgAttr.fontWeight "950"
     , SvgAttr.fontFamily "Helvetica"
@@ -49,7 +49,7 @@ textAttributes =
 
 makeMoveAnimation : Coordinate -> Coordinate -> Animation
 makeMoveAnimation start end =
-    steps
+    Simple.steps
         { startAt = [ P.x (toFloat start.columnNumber), P.y (toFloat start.rowNumber) ]
         , options = []
         }
@@ -57,25 +57,25 @@ makeMoveAnimation start end =
 
 
 makeAttackAnimation : Cell -> Cell -> Animation
-makeAttackAnimation heroCell monsterCell =
+makeAttackAnimation startCell attackedCell =
     let
         xDistanceToAttack =
-            (heroCell.gridX - monsterCell.gridX) // 2
+            (startCell.gridX - attackedCell.gridX) // 2
 
         yDistanceToAttack =
-            (heroCell.gridY - monsterCell.gridY) // 2
+            (startCell.gridY - attackedCell.gridY) // 2
 
         startCoordinate =
-            Coordinate heroCell.gridX heroCell.gridY
+            Coordinate startCell.gridX startCell.gridY
 
         attackCoordinate =
-            Coordinate (heroCell.gridX - xDistanceToAttack) (heroCell.gridY - yDistanceToAttack)
+            Coordinate (startCell.gridX - xDistanceToAttack) (startCell.gridY - yDistanceToAttack)
     in
-    steps
-        { startAt = [ P.x (toFloat heroCell.gridX), P.y (toFloat heroCell.gridY) ]
+    Simple.steps
+        { startAt = [ P.x (toFloat startCell.gridX), P.y (toFloat startCell.gridY) ]
         , options = []
         }
-        [ makeAnimationStep attackCoordinate halfAttackAnimationDuration, makeAnimationStep startCoordinate halfAttackAnimationDuration ]
+        [ makeAnimationStep attackCoordinate halfHeroAttackAnimationDuration, makeAnimationStep startCoordinate halfHeroAttackAnimationDuration ]
 
 
 makeDamageAnimation : Cell -> Animation
@@ -84,24 +84,8 @@ makeDamageAnimation startCell =
         ( startX, startY ) =
             ( toFloat startCell.gridX, toFloat (startCell.gridY + halfSquareSize) )
     in
-    steps
+    Simple.steps
         { startAt = [ P.x startX, P.y startY ]
         , options = []
         }
-        [ step attackAnimationDuration [ P.x startX, P.y startY, P.scale 3 ] ]
-
-
-makeAnimationStep : Coordinate -> Int -> Step
-makeAnimationStep coordinate duration =
-    step duration [ P.x (toFloat coordinate.columnNumber), P.y (toFloat coordinate.rowNumber) ]
-
-
-animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
-animatedG =
-    animatedSvg Svg.g
-
-
-animatedSvg =
-    Animated.svg
-        { class = SvgAttr.class
-        }
+        [ Simple.step heroAttackAnimationDuration [ P.x startX, P.y startY, P.scale 3 ] ]

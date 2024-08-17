@@ -8,11 +8,16 @@ moveAnimationDuration =
     200
 
 
-attackAnimationDuration : Int
-attackAnimationDuration =
-    halfAttackAnimationDuration * 2
+heroAttackAnimationDuration : Int
+heroAttackAnimationDuration =
+    halfHeroAttackAnimationDuration * 2
 
 
-halfAttackAnimationDuration : Int
-halfAttackAnimationDuration =
+halfHeroAttackAnimationDuration : Int
+halfHeroAttackAnimationDuration =
     250
+
+
+monsterAnimationDuration : Int
+monsterAnimationDuration =
+    700

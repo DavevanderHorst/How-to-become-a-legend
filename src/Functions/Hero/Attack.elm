@@ -1,7 +1,7 @@
 module Functions.Hero.Attack exposing (..)
 
 import Constants.Sounds exposing (heroAttackSound)
-import Constants.Times exposing (attackAnimationDuration)
+import Constants.Times exposing (heroAttackAnimationDuration)
 import Functions.Animations.Hero exposing (makeAttackAnimationSvgs)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
@@ -37,7 +37,7 @@ handleHeroAttack model attackedCell damage =
                     { updatedLevel | currentAnimations = animations }
 
                 animationIsDoneCommand =
-                    Process.sleep (toFloat <| attackAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
+                    Process.sleep (toFloat <| heroAttackAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
 
                 playSoundCommand =
                     playMusic heroAttackSound

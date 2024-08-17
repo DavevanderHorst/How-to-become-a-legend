@@ -3,8 +3,10 @@ module Main exposing (init, keyDecoder, main, subscriptions)
 import Browser
 import Browser.Dom
 import Browser.Events exposing (onResize)
+import Dict
 import Functions.Hero.Attack exposing (handleHeroAttack)
-import Functions.Level exposing (setHeroInPlayFieldInLevel)
+import Functions.Level exposing (setHeroInPlayFieldInLevel, setMonstersInPlayFieldInLevel)
+import Functions.Monsters.Base exposing (handleMonstersTurn)
 import Functions.PressedKey exposing (handleKeyPressed, handlePressedKey)
 import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
@@ -75,6 +77,7 @@ update msg model =
 
         HeroAnimationIsDone ->
             -- hero is removed for the animation, so needs to be set back.
+            -- remove made animations
             -- after hero is done its monsters turn now.
             let
                 updatedLevel =
@@ -85,13 +88,29 @@ update msg model =
             in
             ( { model | level = finishedLevel }, Task.perform (\_ -> MonstersTurn) (Task.succeed True) )
 
+        MonsterAnimationsAreDone ->
+            -- monster are removed from play field for animations, so we need to set them back
+            -- remove made animations
+            -- we enable player input again.
+            let
+                levelWithMonsters =
+                    setMonstersInPlayFieldInLevel model.level
+
+                finishedLevel =
+                    { levelWithMonsters | currentAnimations = [] }
+            in
+            ( { model | level = finishedLevel, playerInput = Possible }, Cmd.none )
+
         HeroAttacks attackedCell damage ->
             handleHeroAttack model attackedCell damage
 
         MonstersTurn ->
-            -- all monsters do their turn now,
-            -- if next to hero then attack, else move towards hero.
-            ( model, Cmd.none )
+            -- Check if there are any monsters
+            if Dict.isEmpty model.level.monsterModels then
+                ( { model | playerInput = Possible }, Cmd.none )
+
+            else
+                handleMonstersTurn model
 
 
 handleScreenSize : Float -> Float -> MainModel -> ( MainModel, Cmd Msg )

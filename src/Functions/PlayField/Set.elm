@@ -1,9 +1,10 @@
-module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe)
+module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe)
 
 import Dict exposing (Dict)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
-import Types exposing (CellContent(..))
+import Models.Monster exposing (MonsterModel)
+import Types exposing (CellContent(..), Specie)
 
 
 setHeroInPlayFieldUnsafe : Coordinate -> Dict String Cell -> Dict String Cell
@@ -18,6 +19,22 @@ setContentToHero =
         (\old -> { old | content = Hero })
 
 
+setMonstersInPlayFieldUnsafe : Dict String MonsterModel -> Dict String Cell -> Dict String Cell
+setMonstersInPlayFieldUnsafe monsterDict playField =
+    Dict.foldl setMonsterInPlayFieldUnsafe playField monsterDict
+
+
+setMonsterInPlayFieldUnsafe : String -> MonsterModel -> Dict String Cell -> Dict String Cell
+setMonsterInPlayFieldUnsafe _ monster playField =
+    updateGridCellDict monster.coordinate (setContentToMonster monster.specie) playField
+
+
+setContentToMonster : Specie -> Maybe Cell -> Maybe Cell
+setContentToMonster specie =
+    Maybe.map
+        (\old -> { old | content = Monster specie })
+
+
 removeHeroFromPlayFieldUnsafe : Coordinate -> Dict String Cell -> Dict String Cell
 removeHeroFromPlayFieldUnsafe coordinate playField =
     -- unsafe, cell will be set to empty, even if hero is not there, or if cell does not exist
@@ -28,6 +45,16 @@ setContentToEmpty : Maybe Cell -> Maybe Cell
 setContentToEmpty =
     Maybe.map
         (\old -> { old | content = Empty })
+
+
+removeMonstersFromPlayFieldUnSafe : Dict String MonsterModel -> Dict String Cell -> Dict String Cell
+removeMonstersFromPlayFieldUnSafe monsterDict playField =
+    Dict.foldl removeMonsterInPlayFieldUnsafe playField monsterDict
+
+
+removeMonsterInPlayFieldUnsafe : String -> MonsterModel -> Dict String Cell -> Dict String Cell
+removeMonsterInPlayFieldUnsafe _ monster playField =
+    updateGridCellDict monster.coordinate setContentToEmpty playField
 
 
 updateGridCellDict : Coordinate -> (Maybe Cell -> Maybe Cell) -> Dict String Cell -> Dict String Cell
