@@ -11,11 +11,23 @@ getNextCoordinateForDirection direction coordinate =
             -- means go up on screen, is down in our playField in rows
             { coordinate | rowNumber = coordinate.rowNumber - 1 }
 
-        Down ->
-            { coordinate | rowNumber = coordinate.rowNumber + 1 }
+        UpRight ->
+            { coordinate | rowNumber = coordinate.rowNumber - 1, columnNumber = coordinate.columnNumber + 1 }
 
         Right ->
             { coordinate | columnNumber = coordinate.columnNumber + 1 }
 
+        DownRight ->
+            { coordinate | rowNumber = coordinate.rowNumber + 1, columnNumber = coordinate.columnNumber + 1 }
+
+        Down ->
+            { coordinate | rowNumber = coordinate.rowNumber + 1 }
+
+        DownLeft ->
+            { coordinate | rowNumber = coordinate.rowNumber + 1, columnNumber = coordinate.columnNumber - 1 }
+
         Left ->
             { coordinate | columnNumber = coordinate.columnNumber - 1 }
+
+        UpLeft ->
+            { coordinate | rowNumber = coordinate.rowNumber - 1, columnNumber = coordinate.columnNumber - 1 }

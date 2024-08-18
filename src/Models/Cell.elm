@@ -8,6 +8,7 @@ type alias Cell =
     , gridX : Int
     , gridY : Int
     , content : CellContent
+    , stepsToHero : Maybe Int
     }
 
 

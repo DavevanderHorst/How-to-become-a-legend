@@ -1,4 +1,4 @@
-module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe)
+module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe, setStepsForCoordinateInPlayFieldIfEmpty)
 
 import Dict exposing (Dict)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
@@ -55,6 +55,27 @@ removeMonstersFromPlayFieldUnSafe monsterDict playField =
 removeMonsterInPlayFieldUnsafe : String -> MonsterModel -> Dict String Cell -> Dict String Cell
 removeMonsterInPlayFieldUnsafe _ monster playField =
     updateGridCellDict monster.coordinate setContentToEmpty playField
+
+
+setStepsForCoordinateInPlayFieldIfEmpty : Int -> Coordinate -> Dict String Cell -> Dict String Cell
+setStepsForCoordinateInPlayFieldIfEmpty steps coordinate playField =
+    updateGridCellDict coordinate (setStepsIfEmpty steps) playField
+
+
+setStepsIfEmpty : Int -> Maybe Cell -> Maybe Cell
+setStepsIfEmpty steps =
+    Maybe.map
+        (\old ->
+            case old.content of
+                Empty ->
+                    { old | stepsToHero = Just steps }
+
+                Hero ->
+                    old
+
+                Monster _ ->
+                    old
+        )
 
 
 updateGridCellDict : Coordinate -> (Maybe Cell -> Maybe Cell) -> Dict String Cell -> Dict String Cell

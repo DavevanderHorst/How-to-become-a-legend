@@ -5,7 +5,7 @@ import Constants.Times exposing (moveAnimationDuration)
 import Functions.Animations.Hero exposing (makeMoveAnimationSvgs)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Functions.Random exposing (rollHeroDamage)
 import Functions.ToString exposing (coordinateToString)
@@ -70,7 +70,7 @@ handlePressedArrowDirection direction model =
             makePlayFieldDictKeyFromCoordinate nextCoordinate
 
         nextCellResult =
-            tryGetCellFromPlayField nextKey model.level.playField
+            tryGetCellFromPlayFieldByKey nextKey model.level.playField
     in
     case nextCellResult of
         Err _ ->
@@ -90,7 +90,7 @@ handlePressedArrowDirection direction model =
                             model.level
 
                         currentHeroCellResult =
-                            tryGetCellFromPlayField (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField
+                            tryGetCellFromPlayFieldByKey (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField
                     in
                     case currentHeroCellResult of
                         -- we remove hero from play field, and set the new coordinate as hero coordinate

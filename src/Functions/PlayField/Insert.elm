@@ -1,7 +1,7 @@
 module Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersInPlayField)
 
 import Dict exposing (Dict)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString, specieToString)
 import Models.Cell exposing (Cell, Coordinate)
@@ -46,7 +46,7 @@ trySetMonsterInPlayField monster playFieldResult =
                     makePlayFieldDictKeyFromCoordinate monster.coordinate
 
                 getCellResult =
-                    tryGetCellFromPlayField dictKey playField
+                    tryGetCellFromPlayFieldByKey dictKey playField
             in
             case getCellResult of
                 Err err ->
@@ -74,7 +74,7 @@ trySetHeroInPlayField coordinate playField =
             makePlayFieldDictKeyFromCoordinate coordinate
 
         getCellResult =
-            tryGetCellFromPlayField dictKey playField
+            tryGetCellFromPlayFieldByKey dictKey playField
     in
     case getCellResult of
         Err err ->

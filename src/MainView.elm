@@ -64,10 +64,20 @@ drawCell _ cell svgList =
     -- first parameter is the key of the dict
     let
         baseGridCellAttributes =
-            makeBaseGridCellAttributes cell
+            makeBaseGridCellAttributes cell "white" 0 0
 
         baseRect =
-            Svg.rect baseGridCellAttributes []
+            case cell.stepsToHero of
+                Nothing ->
+                    Svg.g []
+                        [ Svg.rect baseGridCellAttributes []
+                        ]
+
+                Just steps ->
+                    Svg.g []
+                        [ Svg.rect baseGridCellAttributes []
+                        , Svg.text_ (makeBaseGridCellAttributes cell "black" 5 20) [ Svg.text (String.fromInt steps) ]
+                        ]
     in
     case cell.content of
         Empty ->
@@ -103,11 +113,11 @@ renderHeroCell attr =
     Svg.image attributes []
 
 
-makeBaseGridCellAttributes : Cell -> List (Attribute msg)
-makeBaseGridCellAttributes cell =
-    [ SvgAttr.x (makePxStringFromInt cell.gridX)
-    , SvgAttr.y (makePxStringFromInt cell.gridY)
-    , SvgAttr.fill "white"
+makeBaseGridCellAttributes : Cell -> String -> Int -> Int -> List (Attribute msg)
+makeBaseGridCellAttributes cell color xOff yOff =
+    [ SvgAttr.x (makePxStringFromInt (cell.gridX + xOff))
+    , SvgAttr.y (makePxStringFromInt (cell.gridY + yOff))
+    , SvgAttr.fill color
     ]
         ++ baseCellAttributes
 

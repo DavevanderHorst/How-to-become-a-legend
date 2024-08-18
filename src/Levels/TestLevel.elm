@@ -2,6 +2,7 @@ module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
+import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersInPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
@@ -24,17 +25,18 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 2 2 }
-
-
-monsterList : List MonsterModel
-monsterList =
-    [ monsterOne, monsterTwo ]
+    { coordinate = Coordinate 5 4 }
 
 
 testLevelDummy : Specie
 testLevelDummy =
     Dummy 1
+
+
+monsterList : List MonsterModel
+monsterList =
+    --[ monsterOne, monsterTwo ]
+    []
 
 
 monsterOne : MonsterModel
@@ -65,6 +67,9 @@ createTestLevel =
             case playFieldWithHeroAndMonstersResult of
                 Ok playFieldWithHeroAndMonsters ->
                     let
+                        finishedPlayField =
+                            setPathFindingInPlayField heroStartModel.coordinate playFieldWithHeroAndMonsters
+
                         playFieldWidth =
                             -- last column and row doesnt need the between squares size
                             (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
@@ -76,7 +81,7 @@ createTestLevel =
                             -- if monsters are successfully set in play field, then everything is oke.
                             insertMonstersInMonsterDict monsterList Dict.empty
                     in
-                    Ok (Level playFieldWidth playFieldHeight playFieldWithHeroAndMonsters heroStartModel monsterDict [])
+                    Ok (Level playFieldWidth playFieldHeight finishedPlayField heroStartModel monsterDict [])
 
                 Err error ->
                     Err { error | method = "createTestLevel " ++ error.method, error = "Adding monsters to playField failed. " ++ error.error }
@@ -109,7 +114,13 @@ generatePlayFieldColumns rowNumber colNumber playField =
         gridY =
             (totalSquareSize * (rowNumber - 1)) + backGroundMargin
 
+        createdCell : Cell
         createdCell =
-            Cell (Coordinate colNumber rowNumber) gridX gridY Empty
+            { coordinate = Coordinate colNumber rowNumber
+            , gridX = gridX
+            , gridY = gridY
+            , content = Empty
+            , stepsToHero = Nothing
+            }
     in
     Dict.insert key createdCell playField

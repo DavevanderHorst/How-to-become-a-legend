@@ -3,7 +3,7 @@ module Functions.Monsters.Base exposing (handleMonstersTurn)
 import Constants.Times exposing (heroAttackAnimationDuration, monsterAnimationDuration)
 import Dict exposing (Dict)
 import Functions.Animations.Base exposing (animatedG)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
 import Functions.PlayField.Set exposing (removeMonstersFromPlayFieldUnSafe)
 import MainView exposing (baseCellAttributes, renderMonsterCell)
 import Messages exposing (Msg(..))
@@ -58,7 +58,7 @@ makeMonsterAnimation dict key monster svgListResult =
         Ok svgList ->
             let
                 monsterCellResult =
-                    tryGetCellFromPlayField key dict
+                    tryGetCellFromPlayFieldByKey key dict
             in
             case monsterCellResult of
                 Err err ->

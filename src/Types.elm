@@ -22,6 +22,10 @@ type PressedKey
 
 type Direction
     = Up
-    | Down
+    | UpRight
     | Right
+    | DownRight
+    | Down
+    | DownLeft
     | Left
+    | UpLeft

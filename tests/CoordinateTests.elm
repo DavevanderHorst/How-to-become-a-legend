@@ -2,8 +2,9 @@ module CoordinateTests exposing (..)
 
 import Expect
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
-import Models exposing (Coordinate, Direction(..))
+import Models.Cell exposing (Coordinate)
 import Test exposing (..)
+import Types exposing (Direction(..))
 
 
 nextCoordinateTests : Test

@@ -4,7 +4,7 @@ import Constants.Sounds exposing (heroAttackSound)
 import Constants.Times exposing (heroAttackAnimationDuration)
 import Functions.Animations.Hero exposing (makeAttackAnimationSvgs)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayField)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Cell)
@@ -22,7 +22,7 @@ handleHeroAttack model attackedCell damage =
             model.level
 
         currentHeroCellResult =
-            tryGetCellFromPlayField (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField
+            tryGetCellFromPlayFieldByKey (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField
     in
     case currentHeroCellResult of
         Ok currentHeroCell ->
