@@ -7,7 +7,7 @@ import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetH
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Hero exposing (HeroModel)
-import Models.Level exposing (Level)
+import Models.Level exposing (Level, PlayField)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Types exposing (CellContent(..), Specie(..))
@@ -67,9 +67,6 @@ createTestLevel =
             case playFieldWithHeroAndMonstersResult of
                 Ok playFieldWithHeroAndMonsters ->
                     let
-                        finishedPlayField =
-                            setPathFindingInPlayField heroStartModel.coordinate playFieldWithHeroAndMonsters
-
                         playFieldWidth =
                             -- last column and row doesnt need the between squares size
                             (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
@@ -77,11 +74,17 @@ createTestLevel =
                         playFieldHeight =
                             (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
 
+                        createdPlayField =
+                            PlayField playFieldWidth playFieldHeight playFieldWithHeroAndMonsters
+
+                        finishedPlayField =
+                            setPathFindingInPlayField heroStartModel.coordinate createdPlayField
+
                         monsterDict =
                             -- if monsters are successfully set in play field, then everything is oke.
                             insertMonstersInMonsterDict monsterList Dict.empty
                     in
-                    Ok (Level playFieldWidth playFieldHeight finishedPlayField heroStartModel monsterDict [])
+                    Ok (Level finishedPlayField heroStartModel monsterDict [])
 
                 Err error ->
                     Err { error | method = "createTestLevel " ++ error.method, error = "Adding monsters to playField failed. " ++ error.error }

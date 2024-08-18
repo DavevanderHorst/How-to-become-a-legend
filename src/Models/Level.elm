@@ -9,15 +9,25 @@ import Svg exposing (Svg)
 
 
 type alias Level =
-    { playFieldWidth : Int
-    , playFieldHeight : Int
-    , playField : Dict String Cell
+    { playField : PlayField
     , heroModel : HeroModel
     , monsterModels : Dict String MonsterModel
     , currentAnimations : List (Svg Msg)
     }
 
 
+type alias PlayField =
+    { width : Int
+    , height : Int
+    , field : Dict String Cell
+    }
+
+
+emptyPlayField : PlayField
+emptyPlayField =
+    PlayField 1 1 Dict.empty
+
+
 emptyLevel : Level
 emptyLevel =
-    Level 1 1 Dict.empty emptyHeroModel Dict.empty []
+    Level emptyPlayField emptyHeroModel Dict.empty []

@@ -22,7 +22,7 @@ handleHeroAttack model attackedCell damage =
             model.level
 
         currentHeroCellResult =
-            tryGetCellFromPlayFieldByKey (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField
+            tryGetCellFromPlayFieldByKey (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField.field
     in
     case currentHeroCellResult of
         Ok currentHeroCell ->

@@ -37,8 +37,8 @@ mainView model =
                 , style "align-items" "center"
                 ]
                 [ Svg.svg
-                    [ style "width" (makePxStringFromInt model.level.playFieldWidth)
-                    , style "height" (makePxStringFromInt model.level.playFieldHeight)
+                    [ style "width" (makePxStringFromInt model.level.playField.width)
+                    , style "height" (makePxStringFromInt model.level.playField.height)
                     , style "background-color" "black"
                     ]
                     (drawLevel model.level)
@@ -56,7 +56,7 @@ drawLevel level =
         startSvgList =
             level.currentAnimations
     in
-    Dict.foldl drawCell startSvgList level.playField
+    Dict.foldl drawCell startSvgList level.playField.field
 
 
 drawCell : String -> Cell -> List (Svg Msg) -> List (Svg Msg)

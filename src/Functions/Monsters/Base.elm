@@ -1,6 +1,6 @@
 module Functions.Monsters.Base exposing (handleMonstersTurn)
 
-import Constants.Times exposing (heroAttackAnimationDuration, monsterAnimationDuration)
+import Constants.Times exposing (monsterAnimationDuration)
 import Dict exposing (Dict)
 import Functions.Animations.Base exposing (animatedG)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
@@ -27,15 +27,21 @@ handleMonstersTurn model =
         oldLevel =
             model.level
 
+        oldPlayField =
+            oldLevel.playField
+
         animationsResult =
-            Dict.foldl (makeMonsterAnimation oldLevel.playField) (Ok []) oldLevel.monsterModels
+            Dict.foldl (makeMonsterAnimation oldPlayField.field) (Ok []) oldLevel.monsterModels
     in
     case animationsResult of
-        -- animations are made correctly, so we can remove them from playfield.
+        -- animations are made correctly, so we can remove them from play field.
         Ok animations ->
             let
+                fieldWithoutMonsters =
+                    removeMonstersFromPlayFieldUnSafe oldLevel.monsterModels oldLevel.playField.field
+
                 playFieldWithoutMonsters =
-                    removeMonstersFromPlayFieldUnSafe oldLevel.monsterModels oldLevel.playField
+                    { oldPlayField | field = fieldWithoutMonsters }
 
                 updatedLevel =
                     { oldLevel | currentAnimations = animations, playField = playFieldWithoutMonsters }

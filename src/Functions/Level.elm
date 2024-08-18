@@ -8,27 +8,45 @@ setHeroInPlayFieldInLevel : Level -> Level
 setHeroInPlayFieldInLevel level =
     -- unsafe, notting will be checked.
     let
-        playFieldWithHero =
-            setHeroInPlayFieldUnsafe level.heroModel.coordinate level.playField
+        oldPlayField =
+            level.playField
+
+        fieldWithHero =
+            setHeroInPlayFieldUnsafe level.heroModel.coordinate oldPlayField.field
+
+        updatedPlayField =
+            { oldPlayField | field = fieldWithHero }
     in
-    { level | playField = playFieldWithHero }
+    { level | playField = updatedPlayField }
 
 
 removeHeroFromPlayFieldInLevel : Level -> Level
 removeHeroFromPlayFieldInLevel level =
     -- unsafe, notting will be checked.
     let
-        playFieldWithoutHero =
-            removeHeroFromPlayFieldUnsafe level.heroModel.coordinate level.playField
+        oldPlayField =
+            level.playField
+
+        fieldWithoutHero =
+            removeHeroFromPlayFieldUnsafe level.heroModel.coordinate oldPlayField.field
+
+        updatedPlayField =
+            { oldPlayField | field = fieldWithoutHero }
     in
-    { level | playField = playFieldWithoutHero }
+    { level | playField = updatedPlayField }
 
 
 setMonstersInPlayFieldInLevel : Level -> Level
 setMonstersInPlayFieldInLevel level =
     -- unsafe, notting will be checked.
     let
-        playFieldWithMonsters =
-            setMonstersInPlayFieldUnsafe level.monsterModels level.playField
+        oldPlayField =
+            level.playField
+
+        fieldWithMonsters =
+            setMonstersInPlayFieldUnsafe level.monsterModels oldPlayField.field
+
+        updatedPlayField =
+            { oldPlayField | field = fieldWithMonsters }
     in
-    { level | playField = playFieldWithMonsters }
+    { level | playField = updatedPlayField }

@@ -3,30 +3,44 @@ module Functions.PathFinding exposing (setPathFindingInPlayField)
 import Dict exposing (Dict)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
-import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInPlayField, tryGetCellFromPlayFieldByCoordinate, tryGetCellFromPlayFieldByKey)
+import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInPlayField, tryGetCellFromPlayFieldByCoordinate)
 import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmpty)
 import Models.Cell exposing (Cell, Coordinate)
+import Models.Level exposing (PlayField)
 import Types exposing (CellContent(..), Direction(..))
 
 
-setPathFindingInPlayField : Coordinate -> Dict String Cell -> Dict String Cell
+setPathFindingInPlayField : Coordinate -> PlayField -> PlayField
 setPathFindingInPlayField heroSpot playField =
     let
         playFieldWithFirstRoundDone =
-            setStepsAroundHero heroSpot playField
+            setStepsAroundHero heroSpot playField.field
 
         startCoordinate =
             -- we start 1 right from the top left
             { heroSpot | rowNumber = heroSpot.rowNumber - 2, columnNumber = heroSpot.columnNumber - 1 }
+
+        roundsNeeded =
+            calculateRoundsNeededForPathFinding heroSpot playField.width playField.height
+
+        doneField =
+            fillStepsForRestOfPlayField startCoordinate playFieldWithFirstRoundDone
     in
-    fillStepsForRestOfPlayField startCoordinate playFieldWithFirstRoundDone
+    { playField | field = doneField }
 
 
 fillStepsForRestOfPlayField : Coordinate -> Dict String Cell -> Dict String Cell
 fillStepsForRestOfPlayField startSpot playField =
     -- first we try to fill steps from given coordinate
     --
-    goRightAroundAndFindLowestSteps goRightAroundAndFindLowestStepsStartDirection 0 3 startSpot playField
+    let
+        secondDone =
+            goRightAroundAndFindLowestSteps goRightAroundAndFindLowestStepsStartDirection 0 3 startSpot playField
+
+        nextCoordinate =
+            { startSpot | rowNumber = startSpot.rowNumber - 1, columnNumber = startSpot.columnNumber - 1 }
+    in
+    goRightAroundAndFindLowestSteps goRightAroundAndFindLowestStepsStartDirection 0 5 nextCoordinate secondDone
 
 
 goRightAroundAndFindLowestSteps : Direction -> Int -> Int -> Coordinate -> Dict String Cell -> Dict String Cell
@@ -170,3 +184,8 @@ setStepsAroundHero heroSpot playField =
             setStepsForCoordinateInPlayFieldIfEmpty straightSteps (getNextCoordinateForDirection Left heroSpot) downLeftDone
     in
     setStepsForCoordinateInPlayFieldIfEmpty diagonalSteps (getNextCoordinateForDirection UpLeft heroSpot) leftDone
+
+
+calculateRoundsNeededForPathFinding : Coordinate -> Int -> Int -> Int
+calculateRoundsNeededForPathFinding coordinate maxX maxY =
+    2
