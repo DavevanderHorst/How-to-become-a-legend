@@ -17,15 +17,17 @@ type alias Level =
 
 
 type alias PlayField =
-    { width : Int
-    , height : Int
+    { screenWidth : Float
+    , screenHeight : Float
+    , maxColumns : Int
+    , maxRows : Int
     , field : Dict String Cell
     }
 
 
 emptyPlayField : PlayField
 emptyPlayField =
-    PlayField 1 1 Dict.empty
+    PlayField 1 1 1 1 Dict.empty
 
 
 emptyLevel : Level

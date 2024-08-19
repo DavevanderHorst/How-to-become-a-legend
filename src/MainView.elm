@@ -37,8 +37,8 @@ mainView model =
                 , style "align-items" "center"
                 ]
                 [ Svg.svg
-                    [ style "width" (makePxStringFromInt model.level.playField.width)
-                    , style "height" (makePxStringFromInt model.level.playField.height)
+                    [ style "width" (makePxStringFromFloat model.level.playField.screenWidth)
+                    , style "height" (makePxStringFromFloat model.level.playField.screenHeight)
                     , style "background-color" "black"
                     ]
                     (drawLevel model.level)

@@ -25,7 +25,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 5 4 }
+    { coordinate = Coordinate 13 3 }
 
 
 testLevelDummy : Specie
@@ -69,13 +69,13 @@ createTestLevel =
                     let
                         playFieldWidth =
                             -- last column and row doesnt need the between squares size
-                            (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+                            toFloat <| (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
 
                         playFieldHeight =
-                            (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+                            toFloat <| (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
 
                         createdPlayField =
-                            PlayField playFieldWidth playFieldHeight playFieldWithHeroAndMonsters
+                            PlayField playFieldWidth playFieldHeight columns rows playFieldWithHeroAndMonsters
 
                         finishedPlayField =
                             setPathFindingInPlayField heroStartModel.coordinate createdPlayField
