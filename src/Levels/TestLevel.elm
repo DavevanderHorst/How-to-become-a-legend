@@ -3,14 +3,15 @@ module Levels.TestLevel exposing (..)
 import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
 import Dict exposing (Dict)
 import Functions.PathFinding exposing (setPathFindingInPlayField)
-import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersInPlayField)
+import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersAndObstaclesInPlayField)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Hero exposing (HeroModel)
 import Models.Level exposing (Level, PlayField)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
-import Types exposing (CellContent(..), Specie(..))
+import Models.Obstacle exposing (ObstacleModel)
+import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
 
 
 rows : Int
@@ -25,7 +26,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 13 3 }
+    { coordinate = Coordinate 6 5 }
 
 
 testLevelDummy : Specie
@@ -35,18 +36,42 @@ testLevelDummy =
 
 monsterList : List MonsterModel
 monsterList =
-    --[ monsterOne, monsterTwo ]
     []
 
 
-monsterOne : MonsterModel
-monsterOne =
-    { coordinate = Coordinate 8 2, specie = testLevelDummy }
+obstacleList : List ObstacleModel
+obstacleList =
+    [ obstacleOne, obstacleTwo, obstacleThree, obstacleFour, obstacleFive, obstacleSix ]
 
 
-monsterTwo : MonsterModel
-monsterTwo =
-    { coordinate = Coordinate 3 7, specie = testLevelDummy }
+obstacleOne : ObstacleModel
+obstacleOne =
+    { coordinate = Coordinate 8 5, obstacleType = Rock }
+
+
+obstacleTwo : ObstacleModel
+obstacleTwo =
+    { coordinate = Coordinate 8 6, obstacleType = Rock }
+
+
+obstacleThree : ObstacleModel
+obstacleThree =
+    { coordinate = Coordinate 9 5, obstacleType = Rock }
+
+
+obstacleFour : ObstacleModel
+obstacleFour =
+    { coordinate = Coordinate 10 5, obstacleType = Rock }
+
+
+obstacleFive : ObstacleModel
+obstacleFive =
+    { coordinate = Coordinate 8 7, obstacleType = Rock }
+
+
+obstacleSix : ObstacleModel
+obstacleSix =
+    { coordinate = Coordinate 9 7, obstacleType = Rock }
 
 
 createTestLevel : Result Error Level
@@ -62,7 +87,7 @@ createTestLevel =
         Ok playFieldWithHero ->
             let
                 playFieldWithHeroAndMonstersResult =
-                    trySetMonstersInPlayField monsterList playFieldWithHero
+                    trySetMonstersAndObstaclesInPlayField monsterList obstacleList playFieldWithHero
             in
             case playFieldWithHeroAndMonstersResult of
                 Ok playFieldWithHeroAndMonsters ->

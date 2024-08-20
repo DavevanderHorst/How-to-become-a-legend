@@ -13,6 +13,9 @@ import Types exposing (CellContent(..), Direction(..))
 setPathFindingInPlayField : Coordinate -> PlayField -> PlayField
 setPathFindingInPlayField heroSpot playField =
     let
+        -- first we set the first circle, so we have a start
+        -- we calculate how many rounds we need to fully circle our field
+        -- then we start circling
         playFieldWithFirstRoundDone =
             setStepsAroundHero heroSpot playField.field
 
@@ -29,60 +32,144 @@ setPathFindingInPlayField heroSpot playField =
 
         doneField =
             --
-            fillStepsForRestOfPlayField 0 3 1 roundsNeeded startRoundCoordinate playFieldWithFirstRoundDone
+            fillStepsForRestOfPlayField 0 3 1 roundsNeeded startRoundCoordinate [] playFieldWithFirstRoundDone
     in
     { playField | field = doneField }
 
 
-fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> Dict String Cell -> Dict String Cell
-fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot playField =
-    -- first we try to fill steps from given coordinate
-    --
+fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> Dict String Cell -> Dict String Cell
+fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot coordinatesToDo playField =
+    -- first we go right around, and save all found cells in a list
+    -- then we start with the last one we put in the list, and check all coordinates again.
+    -- if a coordinate still is empty, we save it in a list to check again after we are done circling
     let
-        roundDoneInPlayField =
-            goRightAroundAndFindLowestSteps goRightAroundAndFindLowestStepsStartDirection currentStep maxSteps startSpot playField
+        ( rightAroundFoundCoordinateWithSteps, updatedPlayField ) =
+            goRightAroundAndFindLowestSteps goRightAroundAndFindLowestStepsStartDirection currentStep maxSteps startSpot playField []
+
+        ( roundDoneInPlayField, updatedCoordinatesToDo ) =
+            checkFoundCoordinatesAgainAndSetStepsInPlayField rightAroundFoundCoordinateWithSteps coordinatesToDo updatedPlayField
     in
     if currentRoundNumber == maxRounds then
-        roundDoneInPlayField
+        -- we did all our rounds, now we start by checking our left over coordinates
+        -- these are coordinates that couldn't be set by rounds, but might have a value around them now.
+        checkLeftOverCoordinates updatedCoordinatesToDo roundDoneInPlayField
 
     else
         let
             newStartSpot =
                 { startSpot | rowNumber = startSpot.rowNumber - 1, columnNumber = startSpot.columnNumber - 1 }
         in
-        fillStepsForRestOfPlayField 0 (maxSteps + 2) (currentRoundNumber + 1) maxRounds newStartSpot roundDoneInPlayField
+        fillStepsForRestOfPlayField 0 (maxSteps + 2) (currentRoundNumber + 1) maxRounds newStartSpot updatedCoordinatesToDo roundDoneInPlayField
 
 
-goRightAroundAndFindLowestSteps : Direction -> Int -> Int -> Coordinate -> Dict String Cell -> Dict String Cell
-goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField =
+checkLeftOverCoordinates : List Coordinate -> Dict String Cell -> Dict String Cell
+checkLeftOverCoordinates coordinatesToCheck playField =
+    let
+        numberOfCoordinates =
+            List.length coordinatesToCheck
+
+        ( updatedList, updatedPlayField ) =
+            List.foldl checkLeftOverCoordinate ( [], playField ) coordinatesToCheck
+    in
+    if List.length updatedList < numberOfCoordinates then
+        checkLeftOverCoordinates updatedList updatedPlayField
+
+    else
+        updatedPlayField
+
+
+checkLeftOverCoordinate : Coordinate -> ( List Coordinate, Dict String Cell ) -> ( List Coordinate, Dict String Cell )
+checkLeftOverCoordinate coordinate ( coordinatesToCheckList, playField ) =
+    let
+        maybeLowestStepsAround =
+            findLowestStepsAroundCoordinate coordinate playField
+    in
+    case maybeLowestStepsAround of
+        Nothing ->
+            ( coordinate :: coordinatesToCheckList, playField )
+
+        Just lowestStepsAround ->
+            let
+                updatedPlayField =
+                    setFoundStepsInPlayFieldByCoordinate lowestStepsAround coordinate playField
+            in
+            ( coordinatesToCheckList, updatedPlayField )
+
+
+checkFoundCoordinatesAgainAndSetStepsInPlayField : List ( Coordinate, Maybe Int ) -> List Coordinate -> Dict String Cell -> ( Dict String Cell, List Coordinate )
+checkFoundCoordinatesAgainAndSetStepsInPlayField coordinateWithStepsList coordinatesToDo playField =
+    -- last checked cell is first in list, so we check foldl
+    List.foldl checkFoundCellAgainAndSetStepsInPlayField ( playField, coordinatesToDo ) coordinateWithStepsList
+
+
+checkFoundCellAgainAndSetStepsInPlayField : ( Coordinate, Maybe Int ) -> ( Dict String Cell, List Coordinate ) -> ( Dict String Cell, List Coordinate )
+checkFoundCellAgainAndSetStepsInPlayField ( coordinate, maybeSteps ) ( playField, coordinatesToDoList ) =
+    -- we already checked everything, so we only look for steps around
+    let
+        maybeLowestStepsAround =
+            findLowestStepsAroundCoordinate coordinate playField
+    in
+    case maybeLowestStepsAround of
+        Nothing ->
+            ( playField, coordinate :: coordinatesToDoList )
+
+        Just lowestStepsAround ->
+            case maybeSteps of
+                Nothing ->
+                    let
+                        updatedPlayField =
+                            setFoundStepsInPlayFieldByCoordinate lowestStepsAround coordinate playField
+                    in
+                    ( updatedPlayField, coordinatesToDoList )
+
+                Just oldSteps ->
+                    let
+                        leastSteps =
+                            min lowestStepsAround oldSteps
+
+                        updatedPlayField =
+                            setFoundStepsInPlayFieldByCoordinate leastSteps coordinate playField
+                    in
+                    ( updatedPlayField, coordinatesToDoList )
+
+
+goRightAroundAndFindLowestSteps : Direction -> Int -> Int -> Coordinate -> Dict String Cell -> List ( Coordinate, Maybe Int ) -> ( List ( Coordinate, Maybe Int ), Dict String Cell )
+goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundCoordinateWithStepsList =
     let
         currentCellResult =
             tryGetCellFromPlayFieldByCoordinate currentCoordinate playField
 
-        updatedPlayField =
+        ( updatedFoundCoordinatesWithStepsList, updatedPlayField ) =
             case currentCellResult of
                 Err _ ->
-                    playField
+                    ( foundCoordinateWithStepsList, playField )
 
                 Ok cell ->
                     if cell.content /= Empty then
-                        playField
+                        ( foundCoordinateWithStepsList, playField )
 
                     else
                         let
-                            lowestStepsAround =
-                                findLowestStepsAroundCoordinate currentCoordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
+                            maybeLowestStepsAround =
+                                findLowestStepsAroundCoordinate currentCoordinate playField
+
+                            updatedList =
+                                ( currentCoordinate, maybeLowestStepsAround ) :: foundCoordinateWithStepsList
                         in
-                        case lowestStepsAround of
+                        case maybeLowestStepsAround of
                             Nothing ->
-                                playField
+                                ( updatedList, playField )
 
                             Just steps ->
-                                setStepsForCoordinateInPlayFieldIfEmpty (steps + 1) currentCoordinate playField
+                                let
+                                    newPlayField =
+                                        setFoundStepsInPlayFieldByCoordinate steps currentCoordinate playField
+                                in
+                                ( updatedList, newPlayField )
     in
     if doneSteps == maxSteps then
         if currentDirection == goRightAroundAndFindLowestStepsEndDirection then
-            updatedPlayField
+            ( updatedFoundCoordinatesWithStepsList, updatedPlayField )
 
         else
             let
@@ -92,18 +179,30 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
                 nextCoordinate =
                     getNextCoordinateForDirection nextDirection currentCoordinate
             in
-            goRightAroundAndFindLowestSteps nextDirection 0 maxSteps nextCoordinate updatedPlayField
+            goRightAroundAndFindLowestSteps nextDirection 0 maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesWithStepsList
 
     else
         let
             nextCoordinate =
                 getNextCoordinateForDirection currentDirection currentCoordinate
         in
-        goRightAroundAndFindLowestSteps currentDirection (doneSteps + 1) maxSteps nextCoordinate updatedPlayField
+        goRightAroundAndFindLowestSteps currentDirection (doneSteps + 1) maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesWithStepsList
 
 
-findLowestStepsAroundCoordinate : Coordinate -> Direction -> Maybe Int -> Dict String Cell -> Maybe Int
-findLowestStepsAroundCoordinate coordinate currentDirection maybeSteps playField =
+setFoundStepsInPlayFieldByCoordinate : Int -> Coordinate -> Dict String Cell -> Dict String Cell
+setFoundStepsInPlayFieldByCoordinate steps coordinate playField =
+    -- found steps is from a coordinate 1 away, so need to add one.
+    -- we checked that cell is empty, so we know it is.
+    setStepsForCoordinateInPlayFieldIfEmpty (steps + 1) coordinate playField
+
+
+findLowestStepsAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Int
+findLowestStepsAroundCoordinate coordinate playField =
+    findLowestStepsAroundCoordinateFunction coordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
+
+
+findLowestStepsAroundCoordinateFunction : Coordinate -> Direction -> Maybe Int -> Dict String Cell -> Maybe Int
+findLowestStepsAroundCoordinateFunction coordinate currentDirection maybeSteps playField =
     let
         coordinateToCheck =
             getNextCoordinateForDirection currentDirection coordinate
@@ -132,7 +231,7 @@ findLowestStepsAroundCoordinate coordinate currentDirection maybeSteps playField
             nextDirection =
                 findNextDirectionForGoingAroundUnSafe currentDirection
         in
-        findLowestStepsAroundCoordinate coordinate nextDirection updatedMaybeSteps playField
+        findLowestStepsAroundCoordinateFunction coordinate nextDirection updatedMaybeSteps playField
 
 
 

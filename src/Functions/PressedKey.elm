@@ -131,7 +131,7 @@ handlePressedArrowDirection direction model =
                     in
                     ( { model | error = Just newError }, Cmd.none )
 
-                Monster specie ->
+                Monster _ ->
                     -- need to roll damage die then,
                     -- we move into a monster, so attack!!
                     -- make an attack animation
@@ -139,3 +139,9 @@ handlePressedArrowDirection direction model =
                     -- make a sound
                     -- show damage above monster head
                     ( { model | playerInput = Stopped }, Random.generate (HeroAttacks nextCell) rollHeroDamage )
+
+                Obstacle _ ->
+                    -- cant move here, its blocked, make bump sound.
+                    ( { model | playerInput = Possible }
+                    , playMusic bumpInWallSound
+                    )

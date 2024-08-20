@@ -1,7 +1,7 @@
 module Functions.ToString exposing (..)
 
 import Models.Cell exposing (Coordinate)
-import Types exposing (CellContent(..), Specie(..))
+import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
 
 
 coordinateToString : Coordinate -> String
@@ -21,9 +21,19 @@ cellContentToString content =
         Monster specie ->
             "Monster - " ++ specieToString specie
 
+        Obstacle obstacleType ->
+            "Obstacle - " ++ obstacleTypeToString obstacleType
+
 
 specieToString : Specie -> String
 specieToString specie =
     case specie of
         Dummy _ ->
             "Dummy"
+
+
+obstacleTypeToString : ObstacleType -> String
+obstacleTypeToString obstacleType =
+    case obstacleType of
+        Rock ->
+            "rock"

@@ -10,7 +10,7 @@ import Models.Level exposing (Level)
 import Models.MainModel exposing (MainModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
-import Types exposing (CellContent(..), Specie(..))
+import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
 
 
@@ -89,6 +89,9 @@ drawCell _ cell svgList =
         Monster specie ->
             baseRect :: renderMonsterCell specie baseGridCellAttributes :: svgList
 
+        Obstacle obstacleType ->
+            baseRect :: renderObstacleCell obstacleType baseGridCellAttributes :: svgList
+
 
 renderMonsterCell : Specie -> List (Attribute msg) -> Svg msg
 renderMonsterCell specie attr =
@@ -97,6 +100,20 @@ renderMonsterCell specie attr =
             case specie of
                 Dummy _ ->
                     "assets/images/dummyNoBg.png"
+
+        imageAttributes =
+            SvgAttr.xlinkHref imageLink :: attr
+    in
+    Svg.image imageAttributes []
+
+
+renderObstacleCell : ObstacleType -> List (Attribute msg) -> Svg msg
+renderObstacleCell obstacle attr =
+    let
+        imageLink =
+            case obstacle of
+                Rock ->
+                    "assets/images/rock.png"
 
         imageAttributes =
             SvgAttr.xlinkHref imageLink :: attr

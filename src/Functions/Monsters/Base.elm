@@ -83,14 +83,14 @@ makeMonsterAnimation dict key monster svgListResult =
 
                         Hero ->
                             Err
-                                { method = "makeMonsterAnimation - "
+                                { method = "makeMonsterAnimation"
                                 , error = "Monster coordinate contains a hero"
                                 }
 
                         Monster specie ->
                             if specie /= monster.specie then
                                 Err
-                                    { method = "makeMonsterAnimation - "
+                                    { method = "makeMonsterAnimation"
                                     , error = "Monster specie is not the same as cell content."
                                     }
 
@@ -100,6 +100,12 @@ makeMonsterAnimation dict key monster svgListResult =
                                         animatedG (makeGrowAnimation monsterCell) [] [ renderMonsterCell monster.specie baseCellAttributes ]
                                 in
                                 Ok (damageAnimation :: svgList)
+
+                        Obstacle obstacleType ->
+                            Err
+                                { method = "makeMonsterAnimation"
+                                , error = "Monster coordinate contains an obstacle"
+                                }
 
 
 makeGrowAnimation : Cell -> Animation

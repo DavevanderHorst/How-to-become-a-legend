@@ -5,6 +5,11 @@ type CellContent
     = Empty
     | Hero
     | Monster Specie
+    | Obstacle ObstacleType
+
+
+type ObstacleType
+    = Rock
 
 
 type Specie

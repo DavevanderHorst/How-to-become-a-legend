@@ -75,6 +75,9 @@ setStepsIfEmpty steps =
 
                 Monster _ ->
                     old
+
+                Obstacle _ ->
+                    old
         )
 
 
