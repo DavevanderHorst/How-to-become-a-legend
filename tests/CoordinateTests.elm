@@ -32,17 +32,3 @@ nextCoordinateTests =
                 getNextCoordinateForDirection Right startCoordinate
                     |> Expect.equal { startCoordinate | columnNumber = startCoordinate.columnNumber + 1 }
         ]
-
-
-calculateRoundsNeededForPathFindingTest : Test
-calculateRoundsNeededForPathFindingTest =
-    describe "Calculate how many rounds are needed to fill map with steps"
-        [ test "should be max in width" <|
-            \_ ->
-                calculateRoundsNeededForPathFinding (Coordinate 2 1) 10 2
-                    |> Expect.equal 8
-        , test "should be max in height" <|
-            \_ ->
-                calculateRoundsNeededForPathFinding (Coordinate 1 1) 2 9
-                    |> Expect.equal 19
-        ]

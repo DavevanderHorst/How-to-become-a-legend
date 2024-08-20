@@ -1,8 +1,9 @@
-module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe, setStepsForCoordinateInPlayFieldIfEmpty)
+module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, removeStepsFromPlayField, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe, setStepsForCoordinateInPlayFieldIfEmpty)
 
 import Dict exposing (Dict)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
+import Models.Level exposing (PlayField)
 import Models.Monster exposing (MonsterModel)
 import Types exposing (CellContent(..), Specie)
 
@@ -57,9 +58,23 @@ removeMonsterInPlayFieldUnsafe _ monster playField =
     updateGridCellDict monster.coordinate setContentToEmpty playField
 
 
+removeStepsFromPlayField : PlayField -> PlayField
+removeStepsFromPlayField playField =
+    let
+        newField =
+            Dict.map setStepsToNothing playField.field
+    in
+    { playField | field = newField }
+
+
 setStepsForCoordinateInPlayFieldIfEmpty : Int -> Coordinate -> Dict String Cell -> Dict String Cell
 setStepsForCoordinateInPlayFieldIfEmpty steps coordinate playField =
     updateGridCellDict coordinate (setStepsIfEmpty steps) playField
+
+
+setStepsToNothing : String -> Cell -> Cell
+setStepsToNothing _ =
+    \old -> { old | stepsToHero = Nothing }
 
 
 setStepsIfEmpty : Int -> Maybe Cell -> Maybe Cell

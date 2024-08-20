@@ -5,7 +5,9 @@ import Constants.Times exposing (moveAnimationDuration)
 import Functions.Animations.Hero exposing (makeMoveAnimationSvgs)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
+import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
+import Functions.PlayField.Set exposing (removeStepsFromPlayField)
 import Functions.Random exposing (rollHeroDamage)
 import Functions.ToString exposing (coordinateToString)
 import Messages exposing (Msg(..))
@@ -90,6 +92,8 @@ handlePressedArrowDirection direction model =
                     in
                     case currentHeroCellResult of
                         -- we remove hero from play field, and set the new coordinate as hero coordinate
+                        -- then we remove all old steps
+                        -- then we set the pathfinding for the new coordinate
                         -- if move animation is finished, we set hero on this new spot.
                         Ok currentHeroCell ->
                             let
@@ -102,11 +106,24 @@ handlePressedArrowDirection direction model =
                                 oldHeroModel =
                                     updatedLevel.heroModel
 
+                                newHeroCoordinate =
+                                    nextCell.coordinate
+
                                 updatedHeroModel =
-                                    { oldHeroModel | coordinate = nextCell.coordinate }
+                                    { oldHeroModel | coordinate = newHeroCoordinate }
+
+                                playFieldWithRemovedPathFinding =
+                                    removeStepsFromPlayField updatedLevel.playField
+
+                                playFieldWithPathFinding =
+                                    setPathFindingInPlayField newHeroCoordinate playFieldWithRemovedPathFinding
 
                                 finishedLevel =
-                                    { updatedLevel | heroModel = updatedHeroModel, currentAnimations = moveAnimation }
+                                    { updatedLevel
+                                        | heroModel = updatedHeroModel
+                                        , currentAnimations = moveAnimation
+                                        , playField = playFieldWithPathFinding
+                                    }
 
                                 nextCommand =
                                     Process.sleep (toFloat <| moveAnimationDuration) |> Task.perform (always HeroAnimationIsDone)

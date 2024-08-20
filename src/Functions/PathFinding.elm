@@ -1,4 +1,4 @@
-module Functions.PathFinding exposing (..)
+module Functions.PathFinding exposing (setPathFindingInPlayField)
 
 import Dict exposing (Dict)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
