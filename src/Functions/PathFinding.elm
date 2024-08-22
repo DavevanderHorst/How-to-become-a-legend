@@ -52,7 +52,8 @@ fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds st
     if currentRoundNumber == maxRounds then
         -- we did all our rounds, now we start by checking our left over coordinates
         -- these are coordinates that couldn't be set by rounds, but might have a value around them now.
-        checkLeftOverCoordinates updatedCoordinatesToDo roundDoneInPlayField
+        checkLeftOverCoordinatesFirstTime updatedCoordinatesToDo roundDoneInPlayField
+        --roundDoneInPlayField
 
     else
         let
@@ -62,38 +63,66 @@ fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds st
         fillStepsForRestOfPlayField 0 (maxSteps + 2) (currentRoundNumber + 1) maxRounds newStartSpot updatedCoordinatesToDo roundDoneInPlayField
 
 
-checkLeftOverCoordinates : List Coordinate -> Dict String Cell -> Dict String Cell
-checkLeftOverCoordinates coordinatesToCheck playField =
-    let
-        numberOfCoordinates =
-            List.length coordinatesToCheck
+checkLeftOverCoordinatesFirstTime : List Coordinate -> Dict String Cell -> Dict String Cell
+checkLeftOverCoordinatesFirstTime coordinatesToCheck playField =
+    checkLeftOverCoordinates True coordinatesToCheck playField
 
-        ( updatedList, updatedPlayField ) =
-            List.foldl checkLeftOverCoordinate ( [], playField ) coordinatesToCheck
+
+checkLeftOverCoordinates : Bool -> List Coordinate -> Dict String Cell -> Dict String Cell
+checkLeftOverCoordinates isFirstRound coordinatesToCheck playField =
+    -- leftover coordinates are set when rounds are over.
+    -- we dont know where to start
+    -- so we need to do this for all coordinates until notting is changed anymore
+    let
+        ( updatedPlayField, isChanged ) =
+            List.foldl (checkLeftOverCoordinate isFirstRound) ( playField, False ) coordinatesToCheck
     in
-    if List.length updatedList < numberOfCoordinates then
-        checkLeftOverCoordinates updatedList updatedPlayField
+    if isChanged then
+        checkLeftOverCoordinates False coordinatesToCheck updatedPlayField
 
     else
         updatedPlayField
 
 
-checkLeftOverCoordinate : Coordinate -> ( List Coordinate, Dict String Cell ) -> ( List Coordinate, Dict String Cell )
-checkLeftOverCoordinate coordinate ( coordinatesToCheckList, playField ) =
+checkLeftOverCoordinate : Bool -> Coordinate -> ( Dict String Cell, Bool ) -> ( Dict String Cell, Bool )
+checkLeftOverCoordinate isFirstRound coordinate ( playField, isChanged ) =
     let
         maybeLowestStepsAround =
             findLowestStepsAroundCoordinate coordinate playField
     in
     case maybeLowestStepsAround of
         Nothing ->
-            ( coordinate :: coordinatesToCheckList, playField )
+            ( playField, isChanged )
 
         Just lowestStepsAround ->
-            let
-                updatedPlayField =
-                    setFoundStepsInPlayFieldByCoordinate lowestStepsAround coordinate playField
-            in
-            ( coordinatesToCheckList, updatedPlayField )
+            if isFirstRound then
+                setStepsForCheckLeftOverCoordinate lowestStepsAround coordinate playField
+
+            else
+                let
+                    currentCoordinateSteps =
+                        getMaybeStepsForCoordinateInPlayField coordinate playField
+                in
+                case currentCoordinateSteps of
+                    Nothing ->
+                        setStepsForCheckLeftOverCoordinate lowestStepsAround coordinate playField
+
+                    Just currentSteps ->
+                        -- current coordinate has given one extra when added to our playField.
+                        if lowestStepsAround < (currentSteps - 1) then
+                            setStepsForCheckLeftOverCoordinate lowestStepsAround coordinate playField
+
+                        else
+                            ( playField, isChanged )
+
+
+setStepsForCheckLeftOverCoordinate : Int -> Coordinate -> Dict String Cell -> ( Dict String Cell, Bool )
+setStepsForCheckLeftOverCoordinate steps coordinate playField =
+    let
+        updatedPlayField =
+            setFoundStepsInPlayFieldByCoordinate steps coordinate playField
+    in
+    ( updatedPlayField, True )
 
 
 checkFoundCoordinatesAgainAndSetStepsInPlayField : List ( Coordinate, Maybe Int ) -> List Coordinate -> Dict String Cell -> ( Dict String Cell, List Coordinate )
@@ -105,6 +134,9 @@ checkFoundCoordinatesAgainAndSetStepsInPlayField coordinateWithStepsList coordin
 checkFoundCellAgainAndSetStepsInPlayField : ( Coordinate, Maybe Int ) -> ( Dict String Cell, List Coordinate ) -> ( Dict String Cell, List Coordinate )
 checkFoundCellAgainAndSetStepsInPlayField ( coordinate, maybeSteps ) ( playField, coordinatesToDoList ) =
     -- we already checked everything, so we only look for steps around
+    -- we need to save all found values.
+    -- we check the found values if they are 1 lower or 1 higher then our current spot.
+    -- if not, we stop, and we need to go redo set values
     let
         maybeLowestStepsAround =
             findLowestStepsAroundCoordinate coordinate playField

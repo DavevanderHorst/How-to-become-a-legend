@@ -2,8 +2,12 @@
 rogue like game
 
 Next programming steps.
-    
 
+Test pathfinding with more obstacles
+Add monsters, pathfinding should also be set in monster spots
+
+Monsters should move towards the lowest number, lowest towards hero
+Monster needs to know path of movement.
 Make monster turn after hero moved.
     -- for this we need a list of monsters.
     -- then for each monster do their action
@@ -11,8 +15,7 @@ Make monster turn after hero moved.
 
 Give hero and monster hit-points. Damage removes hit-points.
 Make a monster death animation.
-Make pathfinding so monsters move towards lowest number
-Monster needs to know path of movement.
+
 
 
 

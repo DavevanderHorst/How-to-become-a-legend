@@ -68,9 +68,9 @@ trySetObstaclesInPlayField obstacle playFieldResult =
 
                     else
                         Err
-                            { method = "Functions.Dict.Insert.trySetMonsterInPlayField"
+                            { method = "Functions.Dict.Insert.trySetObstaclesInPlayField"
                             , error =
-                                "Cant set monster("
+                                "Cant set obstacle("
                                     ++ obstacleTypeToString obstacle.obstacleType
                                     ++ ") in play field, cell is not empty : "
                                     ++ cellContentToString cell.content

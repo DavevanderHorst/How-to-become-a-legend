@@ -26,7 +26,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 6 5 }
+    { coordinate = Coordinate 10 8 }
 
 
 testLevelDummy : Specie
@@ -41,7 +41,7 @@ monsterList =
 
 obstacleList : List ObstacleModel
 obstacleList =
-    [ obstacleOne, obstacleTwo, obstacleThree, obstacleFour, obstacleFive, obstacleSix ]
+    [ obstacleOne, obstacleTwo, obstacleThree, obstacleFour, obstacleFive, obstacleSix, obstacleSeven, obstacleEight, obstacleNine, obstacleTen ]
 
 
 obstacleOne : ObstacleModel
@@ -72,6 +72,26 @@ obstacleFive =
 obstacleSix : ObstacleModel
 obstacleSix =
     { coordinate = Coordinate 9 7, obstacleType = Rock }
+
+
+obstacleSeven : ObstacleModel
+obstacleSeven =
+    { coordinate = Coordinate 11 7, obstacleType = Rock }
+
+
+obstacleEight : ObstacleModel
+obstacleEight =
+    { coordinate = Coordinate 12 7, obstacleType = Rock }
+
+
+obstacleNine : ObstacleModel
+obstacleNine =
+    { coordinate = Coordinate 13 7, obstacleType = Rock }
+
+
+obstacleTen : ObstacleModel
+obstacleTen =
+    { coordinate = Coordinate 10 7, obstacleType = Rock }
 
 
 createTestLevel : Result Error Level
