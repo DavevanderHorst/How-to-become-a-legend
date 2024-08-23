@@ -20,3 +20,31 @@ findNextDirectionForGoingAroundUnSafe direction =
 
         _ ->
             direction
+
+
+getOppositeDirection : Direction -> Direction
+getOppositeDirection direction =
+    case direction of
+        Up ->
+            Down
+
+        UpRight ->
+            DownLeft
+
+        Right ->
+            Left
+
+        DownRight ->
+            UpLeft
+
+        Down ->
+            Up
+
+        DownLeft ->
+            UpRight
+
+        Left ->
+            Right
+
+        UpLeft ->
+            DownRight
