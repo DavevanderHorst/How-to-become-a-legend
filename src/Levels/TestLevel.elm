@@ -26,7 +26,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 9 8 }
+    { coordinate = Coordinate 8 8 }
 
 
 testLevelDummy : Specie

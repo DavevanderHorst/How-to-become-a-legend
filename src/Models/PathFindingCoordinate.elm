@@ -7,5 +7,5 @@ import Types exposing (Direction)
 type alias PathFindingCoordinate =
     { coordinate : Coordinate
     , lowestStepsAround : Maybe Int
-    , directionToCheck : Maybe Direction
+    , directionToCheck : Direction
     }

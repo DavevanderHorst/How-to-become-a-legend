@@ -164,33 +164,87 @@ checkFoundCellAgainAndSetStepsInPlayField pathFindingCoordinate ( playField, coo
                             min lowestStepsAround oldLowestStepsAround
 
                         updatedCoordinatesToDoList =
-                            case pathFindingCoordinate.directionToCheck of
+                            let
+                                coordinateToCheck =
+                                    getNextCoordinateForDirection pathFindingCoordinate.directionToCheck coordinate
+
+                                maybeSteps =
+                                    getMaybeStepsForCoordinateInPlayField coordinateToCheck playField
+                            in
+                            case maybeSteps of
                                 Nothing ->
                                     coordinatesToDoList
 
-                                Just directionToCheck ->
+                                Just steps ->
                                     let
-                                        coordinateToCheck =
-                                            getNextCoordinateForDirection directionToCheck coordinate
-
-                                        maybeSteps =
-                                            getMaybeStepsForCoordinateInPlayField coordinateToCheck playField
+                                        diff =
+                                            steps - leastSteps
                                     in
-                                    case maybeSteps of
-                                        Nothing ->
+                                    if diff > 1 then
+                                        addCoordinatesToCoordinatesToDoList
+                                            diff
+                                            pathFindingCoordinate.directionToCheck
+                                            coordinateToCheck
                                             coordinatesToDoList
+                                            playField
 
-                                        Just steps ->
-                                            if (leastSteps - steps) > 2 then
-                                                coordinateToCheck :: coordinatesToDoList
-
-                                            else
-                                                coordinatesToDoList
+                                    else
+                                        coordinatesToDoList
 
                         updatedPlayField =
                             setFoundStepsInPlayFieldByCoordinate leastSteps coordinate playField
                     in
                     ( updatedPlayField, updatedCoordinatesToDoList )
+
+
+addCoordinatesToCoordinatesToDoList : Int -> Direction -> Coordinate -> List Coordinate -> Dict String Cell -> List Coordinate
+addCoordinatesToCoordinatesToDoList diff direction currentCoordinate coordinatesToDoList playField =
+    -- we keep adding, until the difference is 1 or we meet an obstacle
+    if diff == 1 then
+        coordinatesToDoList
+
+    else
+        let
+            getCellResult =
+                tryGetCellFromPlayFieldByCoordinate currentCoordinate playField
+        in
+        case getCellResult of
+            Err _ ->
+                coordinatesToDoList
+
+            Ok cell ->
+                if isBlocked cell.content then
+                    coordinatesToDoList
+
+                else
+                    let
+                        updatedCoordinatesToDoList =
+                            if List.member currentCoordinate coordinatesToDoList then
+                                coordinatesToDoList
+
+                            else
+                                currentCoordinate :: coordinatesToDoList
+
+                        nextCoordinate =
+                            getNextCoordinateForDirection direction currentCoordinate
+                    in
+                    addCoordinatesToCoordinatesToDoList (diff - 1) direction nextCoordinate updatedCoordinatesToDoList playField
+
+
+isBlocked : CellContent -> Bool
+isBlocked content =
+    case content of
+        Empty ->
+            False
+
+        Hero ->
+            True
+
+        Monster _ ->
+            False
+
+        Obstacle _ ->
+            True
 
 
 goRightAroundAndFindLowestSteps : Direction -> Int -> Int -> Coordinate -> Dict String Cell -> List PathFindingCoordinate -> ( List PathFindingCoordinate, Dict String Cell )
@@ -214,11 +268,7 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
                                 findLowestStepsAroundCoordinate currentCoordinate playField
 
                             directionToCheck =
-                                if doneSteps == 1 || doneSteps == maxSteps then
-                                    Nothing
-
-                                else
-                                    Just (findNextDirectionForGoingAroundUnSafe currentDirection)
+                                findNextDirectionForGoingAroundUnSafe currentDirection
 
                             newPathFindingCoordinate =
                                 { coordinate = currentCoordinate
