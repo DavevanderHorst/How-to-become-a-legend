@@ -26,7 +26,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 8 8 }
+    { coordinate = Coordinate 14 6 }
 
 
 testLevelDummy : Specie
@@ -41,57 +41,32 @@ monsterList =
 
 obstacleList : List ObstacleModel
 obstacleList =
-    [ obstacleOne, obstacleTwo, obstacleThree, obstacleFour, obstacleFive, obstacleSix, obstacleSeven, obstacleEight, obstacleNine, obstacleTen ]
-
-
-obstacleOne : ObstacleModel
-obstacleOne =
-    { coordinate = Coordinate 8 5, obstacleType = Rock }
-
-
-obstacleTwo : ObstacleModel
-obstacleTwo =
-    { coordinate = Coordinate 8 6, obstacleType = Rock }
-
-
-obstacleThree : ObstacleModel
-obstacleThree =
-    { coordinate = Coordinate 9 5, obstacleType = Rock }
-
-
-obstacleFour : ObstacleModel
-obstacleFour =
-    { coordinate = Coordinate 10 5, obstacleType = Rock }
-
-
-obstacleFive : ObstacleModel
-obstacleFive =
-    { coordinate = Coordinate 8 7, obstacleType = Rock }
-
-
-obstacleSix : ObstacleModel
-obstacleSix =
-    { coordinate = Coordinate 9 7, obstacleType = Rock }
-
-
-obstacleSeven : ObstacleModel
-obstacleSeven =
-    { coordinate = Coordinate 11 7, obstacleType = Rock }
-
-
-obstacleEight : ObstacleModel
-obstacleEight =
-    { coordinate = Coordinate 12 7, obstacleType = Rock }
-
-
-obstacleNine : ObstacleModel
-obstacleNine =
-    { coordinate = Coordinate 13 7, obstacleType = Rock }
-
-
-obstacleTen : ObstacleModel
-obstacleTen =
-    { coordinate = Coordinate 10 7, obstacleType = Rock }
+    [ { coordinate = Coordinate 8 5, obstacleType = Rock }
+    , { coordinate = Coordinate 8 6, obstacleType = Rock }
+    , { coordinate = Coordinate 9 5, obstacleType = Rock }
+    , { coordinate = Coordinate 10 5, obstacleType = Rock }
+    , { coordinate = Coordinate 8 7, obstacleType = Rock }
+    , { coordinate = Coordinate 9 7, obstacleType = Rock }
+    , { coordinate = Coordinate 11 7, obstacleType = Rock }
+    , { coordinate = Coordinate 12 7, obstacleType = Rock }
+    , { coordinate = Coordinate 13 7, obstacleType = Rock }
+    , { coordinate = Coordinate 10 7, obstacleType = Rock }
+    , { coordinate = Coordinate 10 8, obstacleType = Rock }
+    , { coordinate = Coordinate 10 9, obstacleType = Rock }
+    , { coordinate = Coordinate 10 10, obstacleType = Rock }
+    , { coordinate = Coordinate 10 11, obstacleType = Rock }
+    , { coordinate = Coordinate 11 10, obstacleType = Rock }
+    , { coordinate = Coordinate 13 6, obstacleType = Rock }
+    , { coordinate = Coordinate 13 5, obstacleType = Rock }
+    , { coordinate = Coordinate 13 4, obstacleType = Rock }
+    , { coordinate = Coordinate 13 3, obstacleType = Rock }
+    , { coordinate = Coordinate 12 3, obstacleType = Rock }
+    , { coordinate = Coordinate 11 3, obstacleType = Rock }
+    , { coordinate = Coordinate 10 3, obstacleType = Rock }
+    , { coordinate = Coordinate 9 3, obstacleType = Rock }
+    , { coordinate = Coordinate 8 3, obstacleType = Rock }
+    , { coordinate = Coordinate 11 5, obstacleType = Rock }
+    ]
 
 
 createTestLevel : Result Error Level

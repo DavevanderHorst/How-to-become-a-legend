@@ -2,7 +2,6 @@ module CoordinateTests exposing (..)
 
 import Expect
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
-import Functions.PathFinding exposing (calculateRoundsNeededForPathFinding)
 import Models.Cell exposing (Coordinate)
 import Test exposing (..)
 import Types exposing (Direction(..))

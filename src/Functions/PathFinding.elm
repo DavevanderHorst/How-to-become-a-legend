@@ -7,7 +7,6 @@ import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInPlayField, 
 import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmpty)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (PlayField)
-import Models.PathFindingCoordinate exposing (PathFindingCoordinate)
 import Types exposing (CellContent(..), Direction(..))
 
 
@@ -25,42 +24,140 @@ setPathFindingInPlayField heroSpot playField =
             { heroSpot | rowNumber = heroSpot.rowNumber - 2, columnNumber = heroSpot.columnNumber - 1 }
 
         calculatedRoundsNeeded =
-            -- we did 1 round, see setStepsAroundHero , so need to subtract 1.
+            -- we did 1 round, see setStepsAroundHero , so we start at round 2
             calculateRoundsNeededForPathFinding heroSpot playField.maxColumns playField.maxRows
 
-        roundsNeeded =
-            calculatedRoundsNeeded - 1
-
         doneField =
-            --
-            fillStepsForRestOfPlayField 0 3 1 roundsNeeded startRoundCoordinate [] playFieldWithFirstRoundDone
+            -- start at round 2
+            -- 0 steps, since we start, 3 steps for our second round, before we switch direction.
+            fillStepsForRestOfPlayField 0 3 2 calculatedRoundsNeeded startRoundCoordinate [] [] playFieldWithFirstRoundDone
     in
     { playField | field = doneField }
 
 
-fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> Dict String Cell -> Dict String Cell
-fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot coordinatesToDo playField =
-    -- first we go right around, and save all found cells in a list
-    -- then we start with the last one we put in the list, and check all coordinates again.
-    -- if a coordinate still is empty, we save it in a list to check again after we are done circling
+fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> List (List Coordinate) -> Dict String Cell -> Dict String Cell
+fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot todoCoordinates coordinatesByRoundList playField =
+    -- first we go right around, update playField and save all found PathFindingCoordinates in a list
+    -- We save all these by round, and when we foldl, we can go back rounds.
+    -- We go left around, doing this by starting with the last one we put in the list, and check all coordinates again.
+    -- Then we go 1 round back, and see if there are any changes. If we found changes we keep going rounds back.
+    -- Until we are with round 1, or no more changes are detected.
+    -- We keep doing this for every round
+    -- Coordinates that are not set in a round will be saved, and done last.
     let
-        ( rightAroundFoundPathfindingCoordinates, updatedPlayField ) =
-            goRightAroundAndFindLowestSteps goRightAroundAndFindLowestStepsStartDirection currentStep maxSteps startSpot playField []
+        ( allRightAroundCoordinates, updatedPlayField ) =
+            goRightAroundAndFindLowestSteps
+                goRightAroundAndFindLowestStepsStartDirection
+                currentStep
+                maxSteps
+                startSpot
+                playField
+                []
 
-        ( roundDoneInPlayField, updatedCoordinatesToDo ) =
-            checkFoundCoordinatesAgainAndSetStepsInPlayField rightAroundFoundPathfindingCoordinates coordinatesToDo updatedPlayField
+        ( roundDoneInPlayField, updatedTodoCoordinates ) =
+            checkFoundCoordinatesAgain
+                allRightAroundCoordinates
+                todoCoordinates
+                updatedPlayField
+
+        finishedPlayField =
+            checkOldRoundsForChanges coordinatesByRoundList roundDoneInPlayField
+
+        finishedCoordinatesByRoundList =
+            allRightAroundCoordinates :: coordinatesByRoundList
     in
     if currentRoundNumber == maxRounds then
-        -- we did all our rounds, now we start by checking our left over coordinates
-        -- these are coordinates that couldn't be set by rounds, but might have a value around them now.
-        checkLeftOverCoordinatesFirstTime updatedCoordinatesToDo roundDoneInPlayField
+        -- need to do left over coordinates here.
+        checkLeftOverCoordinatesFirstTime updatedTodoCoordinates finishedPlayField
 
     else
         let
             newStartSpot =
                 { startSpot | rowNumber = startSpot.rowNumber - 1, columnNumber = startSpot.columnNumber - 1 }
         in
-        fillStepsForRestOfPlayField 0 (maxSteps + 2) (currentRoundNumber + 1) maxRounds newStartSpot updatedCoordinatesToDo roundDoneInPlayField
+        fillStepsForRestOfPlayField 0
+            (maxSteps + 2)
+            (currentRoundNumber + 1)
+            maxRounds
+            newStartSpot
+            updatedTodoCoordinates
+            finishedCoordinatesByRoundList
+            finishedPlayField
+
+
+checkOldRoundsForChanges : List (List Coordinate) -> Dict String Cell -> Dict String Cell
+checkOldRoundsForChanges coordinatesByRoundList playField =
+    let
+        maybeRoundToCheck =
+            List.head coordinatesByRoundList
+    in
+    case maybeRoundToCheck of
+        Nothing ->
+            playField
+
+        Just roundToCheck ->
+            let
+                ( updatedPlayField, hasChanged ) =
+                    setRoundAndCheckIfChanged roundToCheck playField
+            in
+            if hasChanged then
+                checkOldRoundsForChanges (List.drop 1 coordinatesByRoundList) updatedPlayField
+
+            else
+                playField
+
+
+setRoundAndCheckIfChanged : List Coordinate -> Dict String Cell -> ( Dict String Cell, Bool )
+setRoundAndCheckIfChanged roundToCheck playField =
+    let
+        ( updatedPlayField, hasChanged ) =
+            List.foldl checkCoordinateForStepChanges ( playField, False ) roundToCheck
+    in
+    if hasChanged then
+        List.foldr checkCoordinateForStepChanges ( updatedPlayField, hasChanged ) roundToCheck
+
+    else
+        ( playField, False )
+
+
+checkCoordinateForStepChanges : Coordinate -> ( Dict String Cell, Bool ) -> ( Dict String Cell, Bool )
+checkCoordinateForStepChanges coordinate ( playField, hasChanged ) =
+    let
+        maybeNewLowestStepAround =
+            findLowestStepsAroundCoordinate coordinate playField
+
+        maybeCurrentSteps =
+            getMaybeStepsForCoordinateInPlayField coordinate playField
+    in
+    case maybeNewLowestStepAround of
+        -- notting found, only possible if it always was like this.
+        Nothing ->
+            ( playField, hasChanged )
+
+        Just newLowestStepsAround ->
+            case maybeCurrentSteps of
+                Nothing ->
+                    -- we had nothing before, so this is changed, and this coordinate is in the to do list.
+                    -- we set it now, but keep it in the to do list
+                    let
+                        updatedPlayField =
+                            setFoundStepsInPlayFieldByCoordinate newLowestStepsAround coordinate playField
+                    in
+                    ( updatedPlayField, True )
+
+                Just currentSteps ->
+                    -- we have oldSteps and newSteps, newSteps is from current coordinate, which is always 1 higher.
+                    if currentSteps - 1 > newLowestStepsAround then
+                        -- Found a change, so we set playField
+                        let
+                            updatedPlayField =
+                                setFoundStepsInPlayFieldByCoordinate newLowestStepsAround coordinate playField
+                        in
+                        ( updatedPlayField, True )
+
+                    else
+                        -- notting changed
+                        ( playField, hasChanged )
 
 
 checkLeftOverCoordinatesFirstTime : List Coordinate -> Dict String Cell -> Dict String Cell
@@ -125,76 +222,41 @@ setStepsForCheckLeftOverCoordinate steps coordinate playField =
     ( updatedPlayField, True )
 
 
-checkFoundCoordinatesAgainAndSetStepsInPlayField : List PathFindingCoordinate -> List Coordinate -> Dict String Cell -> ( Dict String Cell, List Coordinate )
-checkFoundCoordinatesAgainAndSetStepsInPlayField pathFindingCoordinatesList coordinatesToDo playField =
-    -- last checked cell is first in list, so we check foldl
-    List.foldl checkFoundCellAgainAndSetStepsInPlayField ( playField, coordinatesToDo ) pathFindingCoordinatesList
+checkFoundCoordinatesAgain :
+    List Coordinate
+    -> List Coordinate
+    -> Dict String Cell
+    -> ( Dict String Cell, List Coordinate )
+checkFoundCoordinatesAgain foundCoordinates toDoCoordinates playField =
+    -- last checked cell is first in list, so we check foldl, meaning we go left around this time
+    -- we need to make our round list here
+    -- and we need to set to do coordinates
+    List.foldl checkFoundCellAgainAndSetStepsInPlayField ( playField, toDoCoordinates ) foundCoordinates
 
 
-checkFoundCellAgainAndSetStepsInPlayField : PathFindingCoordinate -> ( Dict String Cell, List Coordinate ) -> ( Dict String Cell, List Coordinate )
-checkFoundCellAgainAndSetStepsInPlayField pathFindingCoordinate ( playField, coordinatesToDoList ) =
+checkFoundCellAgainAndSetStepsInPlayField :
+    Coordinate
+    -> ( Dict String Cell, List Coordinate )
+    -> ( Dict String Cell, List Coordinate )
+checkFoundCellAgainAndSetStepsInPlayField foundCoordinate ( playField, toDoCoordinates ) =
     -- we already checked everything, so we only look for steps around
-    -- we need to save all found values.
-    -- we check the found values if they are 1 lower or 1 higher then our current spot.
-    -- if not, we stop, and we need to go redo set values
     let
-        coordinate =
-            pathFindingCoordinate.coordinate
-
         maybeLowestStepsAround =
-            findLowestStepsAroundCoordinate coordinate playField
+            findLowestStepsAroundCoordinate foundCoordinate playField
     in
     case maybeLowestStepsAround of
         Nothing ->
-            ( playField, coordinate :: coordinatesToDoList )
+            -- if we found nothing this time, we found nothing last time as well.
+            -- meaning we might have to check this coordinate later
+            ( playField, foundCoordinate :: toDoCoordinates )
 
         Just lowestStepsAround ->
-            case pathFindingCoordinate.lowestStepsAround of
-                Nothing ->
-                    let
-                        updatedPlayField =
-                            setFoundStepsInPlayFieldByCoordinate lowestStepsAround coordinate playField
-                    in
-                    ( updatedPlayField, coordinatesToDoList )
-
-                Just oldLowestStepsAround ->
-                    -- we only need to check opposite direction here
-                    let
-                        leastSteps =
-                            min lowestStepsAround oldLowestStepsAround
-
-                        updatedCoordinatesToDoList =
-                            let
-                                coordinateToCheck =
-                                    getNextCoordinateForDirection pathFindingCoordinate.directionToCheck coordinate
-
-                                maybeSteps =
-                                    getMaybeStepsForCoordinateInPlayField coordinateToCheck playField
-                            in
-                            case maybeSteps of
-                                Nothing ->
-                                    coordinatesToDoList
-
-                                Just steps ->
-                                    let
-                                        diff =
-                                            steps - leastSteps
-                                    in
-                                    if diff > 1 then
-                                        addCoordinatesToCoordinatesToDoList
-                                            diff
-                                            pathFindingCoordinate.directionToCheck
-                                            coordinateToCheck
-                                            coordinatesToDoList
-                                            playField
-
-                                    else
-                                        coordinatesToDoList
-
-                        updatedPlayField =
-                            setFoundStepsInPlayFieldByCoordinate leastSteps coordinate playField
-                    in
-                    ( updatedPlayField, updatedCoordinatesToDoList )
+            -- Now found steps are always lowest, so we just set it again.
+            let
+                updatedPlayField =
+                    setFoundStepsInPlayFieldByCoordinate lowestStepsAround foundCoordinate playField
+            in
+            ( updatedPlayField, toDoCoordinates )
 
 
 addCoordinatesToCoordinatesToDoList : Int -> Direction -> Coordinate -> List Coordinate -> Dict String Cell -> List Coordinate
@@ -247,37 +309,36 @@ isBlocked content =
             True
 
 
-goRightAroundAndFindLowestSteps : Direction -> Int -> Int -> Coordinate -> Dict String Cell -> List PathFindingCoordinate -> ( List PathFindingCoordinate, Dict String Cell )
-goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundPathFindingCoordinatesList =
+goRightAroundAndFindLowestSteps :
+    Direction
+    -> Int
+    -> Int
+    -> Coordinate
+    -> Dict String Cell
+    -> List Coordinate
+    -> ( List Coordinate, Dict String Cell )
+goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundCoordinatesList =
     let
         currentCellResult =
             tryGetCellFromPlayFieldByCoordinate currentCoordinate playField
 
-        ( updatedFoundCoordinatesWithStepsList, updatedPlayField ) =
+        ( updatedFoundCoordinatesList, updatedPlayField ) =
             case currentCellResult of
                 Err _ ->
-                    ( foundPathFindingCoordinatesList, playField )
+                    ( foundCoordinatesList, playField )
 
                 Ok cell ->
+                    -- TODO also monster should be legal
                     if cell.content /= Empty then
-                        ( foundPathFindingCoordinatesList, playField )
+                        ( foundCoordinatesList, playField )
 
                     else
                         let
                             maybeLowestStepsAround =
                                 findLowestStepsAroundCoordinate currentCoordinate playField
 
-                            directionToCheck =
-                                findNextDirectionForGoingAroundUnSafe currentDirection
-
-                            newPathFindingCoordinate =
-                                { coordinate = currentCoordinate
-                                , lowestStepsAround = maybeLowestStepsAround
-                                , directionToCheck = directionToCheck
-                                }
-
                             updatedList =
-                                newPathFindingCoordinate :: foundPathFindingCoordinatesList
+                                currentCoordinate :: foundCoordinatesList
                         in
                         case maybeLowestStepsAround of
                             Nothing ->
@@ -292,7 +353,7 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
     in
     if doneSteps == maxSteps then
         if currentDirection == goRightAroundAndFindLowestStepsEndDirection then
-            ( updatedFoundCoordinatesWithStepsList, updatedPlayField )
+            ( updatedFoundCoordinatesList, updatedPlayField )
 
         else
             let
@@ -302,14 +363,14 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
                 nextCoordinate =
                     getNextCoordinateForDirection nextDirection currentCoordinate
             in
-            goRightAroundAndFindLowestSteps nextDirection 0 maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesWithStepsList
+            goRightAroundAndFindLowestSteps nextDirection 0 maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesList
 
     else
         let
             nextCoordinate =
                 getNextCoordinateForDirection currentDirection currentCoordinate
         in
-        goRightAroundAndFindLowestSteps currentDirection (doneSteps + 1) maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesWithStepsList
+        goRightAroundAndFindLowestSteps currentDirection (doneSteps + 1) maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesList
 
 
 setFoundStepsInPlayFieldByCoordinate : Int -> Coordinate -> Dict String Cell -> Dict String Cell

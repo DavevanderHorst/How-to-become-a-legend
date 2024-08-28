@@ -31,3 +31,17 @@ getNextCoordinateForDirection direction coordinate =
 
         UpLeft ->
             { coordinate | rowNumber = coordinate.rowNumber - 1, columnNumber = coordinate.columnNumber - 1 }
+
+
+removeCoordinateFromList : Coordinate -> List Coordinate -> List Coordinate
+removeCoordinateFromList coordinate coordinateList =
+    List.filter (isNotSameCoordinate coordinate) coordinateList
+
+
+isNotSameCoordinate : Coordinate -> Coordinate -> Bool
+isNotSameCoordinate a b =
+    if a.rowNumber == b.rowNumber && a.columnNumber == b.columnNumber then
+        False
+
+    else
+        True
