@@ -10,12 +10,13 @@ import Functions.Monsters.Base exposing (handleMonstersTurn)
 import Functions.PressedKey exposing (handleKeyPressed, handlePressedKey)
 import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
-import MainView exposing (mainView)
 import Messages exposing (Msg(..))
 import Models.Level exposing (emptyLevel)
 import Models.MainModel exposing (MainModel, Size, startSize)
+import Process
 import Task
 import Types exposing (CellContent(..), Direction(..), PlayerInput(..), PressedKey(..))
+import Views.MainView exposing (mainView)
 
 
 main =
@@ -86,7 +87,7 @@ update msg model =
                 finishedLevel =
                     { updatedLevel | currentAnimations = [] }
             in
-            ( { model | level = finishedLevel }, Task.perform (\_ -> MonstersTurn) (Task.succeed True) )
+            ( { model | level = finishedLevel }, Process.sleep 100 |> Task.perform (always MonstersTurn) )
 
         MonsterAnimationsAreDone ->
             -- monster are removed from play field for animations, so we need to set them back

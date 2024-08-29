@@ -8,12 +8,17 @@ type CellContent
     | Obstacle ObstacleType
 
 
+type Action
+    = Moving
+    | Attacking
+
+
 type ObstacleType
     = Rock
 
 
 type Specie
-    = Dummy Int
+    = Dummy
 
 
 type PlayerInput

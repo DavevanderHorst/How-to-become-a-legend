@@ -2,7 +2,7 @@ module Functions.Hero.Attack exposing (..)
 
 import Constants.Sounds exposing (heroAttackSound)
 import Constants.Times exposing (heroAttackAnimationDuration)
-import Functions.Animations.Hero exposing (makeAttackAnimationSvgs)
+import Functions.Animations.Attack exposing (makeAttackAnimationSvgs)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)

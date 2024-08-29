@@ -3,8 +3,8 @@ module Constants.Times exposing (..)
 -- 1 second = 1000
 
 
-moveAnimationDuration : Int
-moveAnimationDuration =
+heroMoveAnimationDuration : Int
+heroMoveAnimationDuration =
     200
 
 

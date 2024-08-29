@@ -1,4 +1,4 @@
-module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, removeStepsFromPlayField, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe, setStepsForCoordinateInPlayFieldIfEmpty)
+module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, removeStepsFromPlayField, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe, setStepsForCoordinateInPlayFieldIfEmptyOrMonster)
 
 import Dict exposing (Dict)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
@@ -67,9 +67,9 @@ removeStepsFromPlayField playField =
     { playField | field = newField }
 
 
-setStepsForCoordinateInPlayFieldIfEmpty : Int -> Coordinate -> Dict String Cell -> Dict String Cell
-setStepsForCoordinateInPlayFieldIfEmpty steps coordinate playField =
-    updateGridCellDict coordinate (setStepsIfEmpty steps) playField
+setStepsForCoordinateInPlayFieldIfEmptyOrMonster : Int -> Coordinate -> Dict String Cell -> Dict String Cell
+setStepsForCoordinateInPlayFieldIfEmptyOrMonster steps coordinate playField =
+    updateGridCellDict coordinate (setStepsIfEmptyOrMonster steps) playField
 
 
 setStepsToNothing : String -> Cell -> Cell
@@ -77,8 +77,8 @@ setStepsToNothing _ =
     \old -> { old | stepsToHero = Nothing }
 
 
-setStepsIfEmpty : Int -> Maybe Cell -> Maybe Cell
-setStepsIfEmpty steps =
+setStepsIfEmptyOrMonster : Int -> Maybe Cell -> Maybe Cell
+setStepsIfEmptyOrMonster steps =
     Maybe.map
         (\old ->
             case old.content of
@@ -89,7 +89,7 @@ setStepsIfEmpty steps =
                     old
 
                 Monster _ ->
-                    old
+                    { old | stepsToHero = Just steps }
 
                 Obstacle _ ->
                     old

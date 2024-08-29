@@ -1,7 +1,7 @@
-module MainView exposing (..)
+module Views.MainView exposing (..)
 
-import Constants.FieldSizes exposing (squareSize)
 import Dict exposing (Dict)
+import Functions.ToString exposing (monsterCoordinatesToString)
 import Html exposing (Html, audio, div, text)
 import Html.Attributes exposing (id, style)
 import Messages exposing (Msg(..))
@@ -11,7 +11,8 @@ import Models.MainModel exposing (MainModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
 import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
-import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
+import Views.Attributes exposing (makeBaseGridCellAttributes)
+import Views.ViewHelpers exposing (makePxStringFromFloat)
 
 
 mainView : MainModel -> Html Msg
@@ -30,8 +31,8 @@ mainView model =
     case model.error of
         Nothing ->
             div
-                [ style "width" (makePxStringFromFloat model.windowSize.width)
-                , style "height" (makePxStringFromFloat model.windowSize.height)
+                [ style "width" (makePxStringFromFloat (model.windowSize.width - 100))
+                , style "height" (makePxStringFromFloat (model.windowSize.height - 50))
                 , style "display" "flex"
                 , style "justify-content" "center"
                 , style "align-items" "center"
@@ -43,6 +44,8 @@ mainView model =
                     ]
                     (drawLevel model.level)
                 , audio [ id "audio-player", visibility "hidden" ] []
+
+                --, div [] [ text (monsterCoordinatesToString model.level.monsterModels) ]
                 ]
 
         Just error ->
@@ -98,7 +101,7 @@ renderMonsterCell specie attr =
     let
         imageLink =
             case specie of
-                Dummy _ ->
+                Dummy ->
                     "assets/images/dummyNoBg.png"
 
         imageAttributes =
@@ -128,23 +131,3 @@ renderHeroCell attr =
             SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: attr
     in
     Svg.image attributes []
-
-
-makeBaseGridCellAttributes : Cell -> String -> Int -> Int -> List (Attribute msg)
-makeBaseGridCellAttributes cell color xOff yOff =
-    [ SvgAttr.x (makePxStringFromInt (cell.gridX + xOff))
-    , SvgAttr.y (makePxStringFromInt (cell.gridY + yOff))
-    , SvgAttr.fill color
-    ]
-        ++ baseCellAttributes
-
-
-baseCellAttributes : List (Attribute msg)
-baseCellAttributes =
-    let
-        squareSizeInPixelString =
-            makePxStringFromInt squareSize
-    in
-    [ SvgAttr.width squareSizeInPixelString
-    , SvgAttr.height squareSizeInPixelString
-    ]

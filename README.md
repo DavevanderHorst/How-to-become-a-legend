@@ -3,9 +3,7 @@ rogue like game
 
 Next programming steps.
 
-Test pathfinding with more obstacles
 Add monsters, pathfinding should also be set in monster spots
-
 Monsters should move towards the lowest number, lowest towards hero
 Monster needs to know path of movement.
 Make monster turn after hero moved.

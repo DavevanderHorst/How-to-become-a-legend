@@ -1,6 +1,6 @@
 module Functions.Animations.Base exposing (..)
 
-import Models.Cell exposing (Coordinate)
+import Models.Cell exposing (Cell, Coordinate)
 import Simple.Animation as Simple exposing (Animation, Step)
 import Simple.Animation.Animated as Animated
 import Simple.Animation.Property as P
@@ -22,3 +22,18 @@ animatedSvg =
     Animated.svg
         { class = SvgAttr.class
         }
+
+
+
+--
+--makeGrowAnimation : Cell -> Animation
+--makeGrowAnimation startCell =
+--    let
+--        ( startX, startY ) =
+--            ( toFloat startCell.gridX, toFloat startCell.gridY )
+--    in
+--    Simple.steps
+--        { startAt = [ P.x startX, P.y startY ]
+--        , options = []
+--        }
+--        [ Simple.step 100 [ P.x startX, P.y startY, P.scale 2 ] ]

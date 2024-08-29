@@ -1,8 +1,8 @@
 module Functions.PressedKey exposing (..)
 
 import Constants.Sounds exposing (bumpInWallSound)
-import Constants.Times exposing (moveAnimationDuration)
-import Functions.Animations.Hero exposing (makeMoveAnimationSvgs)
+import Constants.Times exposing (heroMoveAnimationDuration)
+import Functions.Animations.Move exposing (tryMakeMoveAnimationSvg)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
 import Functions.PathFinding exposing (setPathFindingInPlayField)
@@ -100,35 +100,47 @@ handlePressedArrowDirection direction model =
                                 updatedLevel =
                                     removeHeroFromPlayFieldInLevel level
 
-                                moveAnimation =
-                                    makeMoveAnimationSvgs currentHeroCell nextCell
-
-                                oldHeroModel =
-                                    updatedLevel.heroModel
-
-                                newHeroCoordinate =
-                                    nextCell.coordinate
-
-                                updatedHeroModel =
-                                    { oldHeroModel | coordinate = newHeroCoordinate }
-
-                                playFieldWithRemovedPathFinding =
-                                    removeStepsFromPlayField updatedLevel.playField
-
-                                playFieldWithPathFinding =
-                                    setPathFindingInPlayField newHeroCoordinate playFieldWithRemovedPathFinding
-
-                                finishedLevel =
-                                    { updatedLevel
-                                        | heroModel = updatedHeroModel
-                                        , currentAnimations = moveAnimation
-                                        , playField = playFieldWithPathFinding
-                                    }
-
-                                nextCommand =
-                                    Process.sleep (toFloat <| moveAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
+                                tryMakeMoveAnimationResult =
+                                    tryMakeMoveAnimationSvg currentHeroCell nextCell
                             in
-                            ( { model | level = finishedLevel, playerInput = Stopped }, nextCommand )
+                            case tryMakeMoveAnimationResult of
+                                Err error ->
+                                    let
+                                        newError =
+                                            { method = "handlePressedArrowDirection - " ++ error.method
+                                            , error = "Failed to make move animation. - " ++ error.error
+                                            }
+                                    in
+                                    ( { model | error = Just newError }, Cmd.none )
+
+                                Ok moveAnimation ->
+                                    let
+                                        oldHeroModel =
+                                            updatedLevel.heroModel
+
+                                        newHeroCoordinate =
+                                            nextCell.coordinate
+
+                                        updatedHeroModel =
+                                            { oldHeroModel | coordinate = newHeroCoordinate }
+
+                                        playFieldWithRemovedPathFinding =
+                                            removeStepsFromPlayField updatedLevel.playField
+
+                                        playFieldWithPathFinding =
+                                            setPathFindingInPlayField newHeroCoordinate playFieldWithRemovedPathFinding
+
+                                        finishedLevel =
+                                            { updatedLevel
+                                                | heroModel = updatedHeroModel
+                                                , currentAnimations = [ moveAnimation ]
+                                                , playField = playFieldWithPathFinding
+                                            }
+
+                                        nextCommand =
+                                            Process.sleep (toFloat <| heroMoveAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
+                                    in
+                                    ( { model | level = finishedLevel, playerInput = Stopped }, nextCommand )
 
                         Err error ->
                             let

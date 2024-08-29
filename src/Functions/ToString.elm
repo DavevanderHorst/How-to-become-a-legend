@@ -1,6 +1,8 @@
 module Functions.ToString exposing (..)
 
+import Dict exposing (Dict)
 import Models.Cell exposing (Coordinate)
+import Models.Monster exposing (MonsterModel)
 import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
 
 
@@ -28,7 +30,7 @@ cellContentToString content =
 specieToString : Specie -> String
 specieToString specie =
     case specie of
-        Dummy _ ->
+        Dummy ->
             "Dummy"
 
 
@@ -37,3 +39,13 @@ obstacleTypeToString obstacleType =
     case obstacleType of
         Rock ->
             "rock"
+
+
+monsterCoordinatesToString : Dict String MonsterModel -> String
+monsterCoordinatesToString monsterDict =
+    Dict.foldl monsterCoordinateToString "" monsterDict
+
+
+monsterCoordinateToString : String -> MonsterModel -> String -> String
+monsterCoordinateToString key monster stringSoFar =
+    stringSoFar ++ "Key : (" ++ key ++ ") " ++ "Coordinate : (" ++ coordinateToString monster.coordinate ++ ") "

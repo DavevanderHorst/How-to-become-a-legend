@@ -11,17 +11,17 @@ import Models.Level exposing (Level, PlayField)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Models.Obstacle exposing (ObstacleModel)
-import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
+import Types exposing (Action(..), CellContent(..), ObstacleType(..), Specie(..))
 
 
 rows : Int
 rows =
-    15
+    14
 
 
 columns : Int
 columns =
-    20
+    19
 
 
 heroStartModel : HeroModel
@@ -29,14 +29,13 @@ heroStartModel =
     { coordinate = Coordinate 14 6 }
 
 
-testLevelDummy : Specie
-testLevelDummy =
-    Dummy 1
-
-
 monsterList : List MonsterModel
 monsterList =
-    []
+    [ { coordinate = Coordinate 9 6
+      , specie = Dummy
+      , action = Moving
+      }
+    ]
 
 
 obstacleList : List ObstacleModel

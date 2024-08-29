@@ -1,28 +1,16 @@
-module Functions.Animations.Hero exposing (makeAttackAnimationSvgs, makeMoveAnimationSvgs)
+module Functions.Animations.Attack exposing (makeAttackAnimationSvgs)
 
 import Constants.FieldSizes exposing (halfSquareSize)
-import Constants.Times exposing (halfHeroAttackAnimationDuration, heroAttackAnimationDuration, moveAnimationDuration)
+import Constants.Times exposing (halfHeroAttackAnimationDuration, heroAttackAnimationDuration)
 import Functions.Animations.Base exposing (animatedG, makeAnimationStep)
-import MainView exposing (baseCellAttributes, renderHeroCell)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr
-
-
-makeMoveAnimationSvgs : Cell -> Cell -> List (Svg Msg)
-makeMoveAnimationSvgs heroSpot nextSpot =
-    -- MoveAnimation is using coordinates, but we are using the screen positions here.
-    let
-        startCoordinate =
-            Coordinate heroSpot.gridX heroSpot.gridY
-
-        endCoordinate =
-            Coordinate nextSpot.gridX nextSpot.gridY
-    in
-    [ animatedG (makeMoveAnimation startCoordinate endCoordinate) [] [ renderHeroCell baseCellAttributes ] ]
+import Views.Attributes exposing (baseCellAttributes)
+import Views.MainView exposing (renderHeroCell)
 
 
 makeAttackAnimationSvgs : Cell -> Cell -> Int -> List (Svg Msg)
@@ -45,15 +33,6 @@ attackTextAttributes =
     , SvgAttr.fontFamily "Helvetica"
     , SvgAttr.stroke "white"
     ]
-
-
-makeMoveAnimation : Coordinate -> Coordinate -> Animation
-makeMoveAnimation start end =
-    Simple.steps
-        { startAt = [ P.x (toFloat start.columnNumber), P.y (toFloat start.rowNumber) ]
-        , options = []
-        }
-        [ makeAnimationStep end moveAnimationDuration ]
 
 
 makeAttackAnimation : Cell -> Cell -> Animation
