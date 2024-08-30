@@ -35,6 +35,14 @@ monsterList =
       , specie = Dummy
       , action = Moving
       }
+    , { coordinate = Coordinate 11 6
+      , specie = Dummy
+      , action = Moving
+      }
+    , { coordinate = Coordinate 3 3
+      , specie = Dummy
+      , action = Moving
+      }
     ]
 
 

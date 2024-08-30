@@ -3,16 +3,25 @@ rogue like game
 
 Next programming steps.
 
-Add monsters, pathfinding should also be set in monster spots
-Monsters should move towards the lowest number, lowest towards hero
-Monster needs to know path of movement.
-Make monster turn after hero moved.
-    -- for this we need a list of monsters.
-    -- then for each monster do their action
-    -- monsters have settled damage for now and always move towards hero or attack when next to it
+Make monster turn after hero moved.    
+    -- monsters have settled damage for now and always move towards hero or attack when next to it    
+    -- ATTACKING
+    -- monster needs to go in attack action when next to hero   
+    -- we can do this in monster turn, before they take there actions.
+
+when a monster is attacking its spot can't be entered by other monsters.
+test by setting monster in a hallway with hero before, what will monster do then...
 
 Give hero and monster hit-points. Damage removes hit-points.
 Make a monster death animation.
+
+
+
+IDEAS!
+
+Monster always moves now right around, so with 2 same shortest roads, it takes always same. Make a list with directions,
+        and go around the direction that's head, and remove and add to the back of the list.
+Sticky terrain, terrain with a chance to get stick...
 
 
 

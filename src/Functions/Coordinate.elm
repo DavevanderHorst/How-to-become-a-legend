@@ -1,5 +1,6 @@
 module Functions.Coordinate exposing (..)
 
+import Functions.Base exposing (differenceBetweenNumbers)
 import Models.Cell exposing (Coordinate)
 import Types exposing (Direction(..))
 
@@ -45,3 +46,23 @@ isNotSameCoordinate a b =
 
     else
         True
+
+
+areCoordinatesNextToEachOther : Coordinate -> Coordinate -> Bool
+areCoordinatesNextToEachOther coordinateOne coordinateTwo =
+    if coordinateOne.columnNumber == coordinateTwo.columnNumber then
+        if differenceBetweenNumbers coordinateOne.rowNumber coordinateTwo.rowNumber == 1 then
+            True
+
+        else
+            False
+
+    else if coordinateOne.rowNumber == coordinateTwo.rowNumber then
+        if differenceBetweenNumbers coordinateOne.columnNumber coordinateTwo.columnNumber == 1 then
+            True
+
+        else
+            False
+
+    else
+        False

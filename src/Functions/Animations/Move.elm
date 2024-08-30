@@ -131,7 +131,7 @@ makeMonsterAnimation playField key monster animationsAndMonstersResult =
                                         -- TODO make attack animation
                                         Ok ( animationList, updatedMonsterDict )
 
-                        Obstacle obstacleType ->
+                        Obstacle _ ->
                             Err
                                 { method = "makeMonsterAnimation"
                                 , error = "Monster coordinate contains an obstacle"

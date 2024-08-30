@@ -70,17 +70,23 @@ drawCell _ cell svgList =
             makeBaseGridCellAttributes cell "white" 0 0
 
         baseRect =
-            case cell.stepsToHero of
-                Nothing ->
-                    Svg.g []
-                        [ Svg.rect baseGridCellAttributes []
-                        ]
+            Svg.g []
+                [ Svg.rect baseGridCellAttributes []
+                ]
 
-                Just steps ->
-                    Svg.g []
-                        [ Svg.rect baseGridCellAttributes []
-                        , Svg.text_ (makeBaseGridCellAttributes cell "black" 5 20) [ Svg.text (String.fromInt steps) ]
-                        ]
+        -- Next lines are to see steps in playField
+        --case cell.stepsToHero of
+        --    Nothing ->
+        --        Svg.g []
+        --            [ Svg.rect baseGridCellAttributes []
+        --            ]
+        --
+        --    Just steps ->
+        --        Svg.g []
+        --            [ Svg.rect baseGridCellAttributes []
+        --
+        --            , Svg.text_ (makeBaseGridCellAttributes cell "black" 5 20) [ Svg.text (String.fromInt steps) ]
+        --            ]
     in
     case cell.content of
         Empty ->
