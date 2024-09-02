@@ -8,6 +8,11 @@ heroMoveAnimationDuration =
     200
 
 
+waitTimeBetweenAnimations : Float
+waitTimeBetweenAnimations =
+    50
+
+
 heroAttackAnimationDuration : Int
 heroAttackAnimationDuration =
     halfHeroAttackAnimationDuration * 2

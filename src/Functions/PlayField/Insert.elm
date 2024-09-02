@@ -1,4 +1,4 @@
-module Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersAndObstaclesInPlayField)
+module Functions.PlayField.Insert exposing (..)
 
 import Dict exposing (Dict)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)

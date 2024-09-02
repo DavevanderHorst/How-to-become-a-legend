@@ -3,10 +3,11 @@ module Main exposing (init, keyDecoder, main, subscriptions)
 import Browser
 import Browser.Dom
 import Browser.Events exposing (onResize)
+import Constants.Times exposing (waitTimeBetweenAnimations)
 import Dict
 import Functions.Hero.Attack exposing (handleHeroAttack)
-import Functions.Level exposing (setHeroInPlayFieldInLevel, setMonstersInPlayFieldInLevel)
-import Functions.Monsters.Base exposing (handleMonstersTurn)
+import Functions.Level exposing (setHeroBackInPlayFieldInLevel, trySetMonsterInPlayFieldInLevel)
+import Functions.Monsters.Base exposing (handleMonsterTurn, handleMonstersTurn)
 import Functions.PressedKey exposing (handleKeyPressed, handlePressedKey)
 import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
@@ -82,25 +83,38 @@ update msg model =
             -- after hero is done its monsters turn now.
             let
                 updatedLevel =
-                    setHeroInPlayFieldInLevel model.level
+                    setHeroBackInPlayFieldInLevel model.level
 
                 finishedLevel =
-                    { updatedLevel | currentAnimations = [] }
+                    { updatedLevel | animations = [] }
             in
-            ( { model | level = finishedLevel }, Process.sleep 100 |> Task.perform (always MonstersTurn) )
+            ( { model | level = finishedLevel }, Process.sleep waitTimeBetweenAnimations |> Task.perform (always MonstersTurn) )
 
-        MonsterAnimationsAreDone ->
-            -- monster are removed from play field for animations, so we need to set them back
+        MonsterAnimationIsDone monster restOfMonstersForAnimation ->
+            -- monster is removed from play field for it's animation, so we need to set it back
             -- remove made animations
             -- we enable player input again.
             let
-                levelWithMonsters =
-                    setMonstersInPlayFieldInLevel model.level
-
-                finishedLevel =
-                    { levelWithMonsters | currentAnimations = [] }
+                levelWithSetMonsterResult =
+                    trySetMonsterInPlayFieldInLevel monster model.level
             in
-            ( { model | level = finishedLevel, playerInput = Possible }, Cmd.none )
+            case levelWithSetMonsterResult of
+                Ok levelWithSetMonster ->
+                    let
+                        finishedLevel =
+                            { levelWithSetMonster | animations = [] }
+
+                        updatedModel =
+                            { model | level = finishedLevel }
+                    in
+                    if List.isEmpty restOfMonstersForAnimation then
+                        ( { updatedModel | playerInput = Possible }, Cmd.none )
+
+                    else
+                        handleMonsterTurn restOfMonstersForAnimation updatedModel
+
+                Err err ->
+                    ( { model | error = Just err }, Cmd.none )
 
         HeroAttacks attackedCell damage ->
             handleHeroAttack model attackedCell damage

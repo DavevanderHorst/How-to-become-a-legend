@@ -1,10 +1,11 @@
-module Functions.Monsters.Base exposing (handleMonstersTurn)
+module Functions.Monsters.Base exposing (handleMonsterTurn, handleMonstersTurn)
 
 import Constants.Times exposing (monsterAnimationDuration)
 import Dict exposing (Dict)
-import Functions.Animations.Move exposing (tryMakeMonsterAnimationsAndAdjustModels)
+import Functions.Animations.Move exposing (tryMakeMonsterAnimationAndAdjustModel)
 import Functions.Coordinate exposing (areCoordinatesNextToEachOther)
-import Functions.PlayField.Set exposing (removeMonstersFromPlayFieldUnSafe)
+import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict)
+import Functions.PlayField.Set exposing (removeMonsterFromPlayFieldUnsafe)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Coordinate)
 import Models.Level exposing (Level)
@@ -15,48 +16,84 @@ import Task
 import Types exposing (Action(..))
 
 
+putMonsterInList : String -> MonsterModel -> List MonsterModel -> List MonsterModel
+putMonsterInList _ monster monsterList =
+    monster :: monsterList
+
+
 handleMonstersTurn : MainModel -> ( MainModel, Cmd Msg )
 handleMonstersTurn model =
-    -- every monster does do something, move or attack, what he does says his action
-    -- we check if a monster is next to a hero, and set them in action/attack modes
-    -- move or attack
-    -- so all get an animation, which means we have the images temporarily
+    -- we check what action each monster is going to do.
+    -- we make a list of our monster, and that we use to make animations for them 1 by 1
+    -- we empty our monster dict, and we put them back after we made the animation,
     let
         oldLevel =
             model.level
 
-        oldMonsters =
-            oldLevel.monsterModels
+        updatedMonsters =
+            checkActionTodoForMonsters oldLevel.heroModel.coordinate oldLevel.monsterModels
+
+        updatedMonstersList =
+            Dict.foldl putMonsterInList [] updatedMonsters
+
+        levelWithoutMonsters =
+            { oldLevel | monsterModels = Dict.empty }
+    in
+    handleMonsterTurn updatedMonstersList { model | level = levelWithoutMonsters }
+
+
+handleMonsterTurn : List MonsterModel -> MainModel -> ( MainModel, Cmd Msg )
+handleMonsterTurn monstersToDoList model =
+    -- every monster does do something, move or attack, what he does says his action
+    -- we doing monsters one by one, animation after animation
+    let
+        oldLevel =
+            model.level
 
         oldPlayField =
             oldLevel.playField
 
-        updatedMonsters =
-            checkActionTodoForMonsters model.level.heroModel.coordinate oldMonsters
+        firstMaybeMonster =
+            List.head monstersToDoList
 
-        makeAnimationsResult =
-            tryMakeMonsterAnimationsAndAdjustModels oldPlayField.field updatedMonsters
+        tailOfMonsterList =
+            List.drop 1 monstersToDoList
     in
-    case makeAnimationsResult of
-        -- animations are made correctly, so we can remove them from play field.
-        Ok ( animations, newMonsterModels ) ->
+    case firstMaybeMonster of
+        Nothing ->
+            ( { model | error = Just { method = "handleMonstersTurn", error = "No more monsters in our list." } }, Cmd.none )
+
+        Just firstMonster ->
             let
-                fieldWithoutMonsters =
-                    removeMonstersFromPlayFieldUnSafe oldLevel.monsterModels oldLevel.playField.field
-
-                playFieldWithoutMonsters =
-                    { oldPlayField | field = fieldWithoutMonsters }
-
-                updatedLevel =
-                    { oldLevel | currentAnimations = animations, playField = playFieldWithoutMonsters, monsterModels = newMonsterModels }
-
-                nextCommand =
-                    Process.sleep (toFloat <| monsterAnimationDuration) |> Task.perform (always MonsterAnimationsAreDone)
+                makeAnimationsResult =
+                    tryMakeMonsterAnimationAndAdjustModel firstMonster oldPlayField.field
             in
-            ( { model | level = updatedLevel }, nextCommand )
+            case makeAnimationsResult of
+                -- we make from our monster dict a list
+                -- then we take the first monster
+                -- we make an
+                Err err ->
+                    ( { model | error = Just err }, Cmd.none )
 
-        Err err ->
-            ( { model | error = Just err }, Cmd.none )
+                Ok ( animations, newMonsterModel ) ->
+                    let
+                        fieldWithRemovedMonster =
+                            removeMonsterFromPlayFieldUnsafe firstMonster oldPlayField.field
+
+                        updatedPlayField =
+                            { oldPlayField | field = fieldWithRemovedMonster }
+
+                        updatedMonsters =
+                            insertMonsterInToMonsterDict newMonsterModel oldLevel.monsterModels
+
+                        updatedLevel =
+                            { oldLevel | animations = animations, playField = updatedPlayField, monsterModels = updatedMonsters }
+
+                        nextCommand =
+                            Process.sleep (toFloat <| monsterAnimationDuration)
+                                |> Task.perform (always (MonsterAnimationIsDone newMonsterModel tailOfMonsterList))
+                    in
+                    ( { model | level = updatedLevel }, nextCommand )
 
 
 checkActionTodoForMonsters : Coordinate -> Dict String MonsterModel -> Dict String MonsterModel
@@ -70,4 +107,4 @@ setMonsterAction heroCoordinate _ monster =
         { monster | action = Attacking }
 
     else
-        monster
+        { monster | action = Moving }

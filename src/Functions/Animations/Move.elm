@@ -4,8 +4,7 @@ import Constants.Times exposing (heroMoveAnimationDuration, monsterAnimationDura
 import Dict exposing (Dict)
 import Functions.Animations.Base exposing (animatedG, makeAnimationStep)
 import Functions.PathFinding exposing (tryFindCoordinateWithOneLowerStepAroundCoordinate)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate, tryGetCellFromPlayFieldByKey)
-import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
 import Functions.ToString exposing (coordinateToString)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
@@ -61,81 +60,65 @@ makeMoveAnimation start end duration =
         [ makeAnimationStep end duration ]
 
 
-tryMakeMonsterAnimationsAndAdjustModels : Dict String Cell -> Dict String MonsterModel -> Result Error ( List (Svg Msg), Dict String MonsterModel )
-tryMakeMonsterAnimationsAndAdjustModels playField monsterDict =
-    Dict.foldl (makeMonsterAnimation playField) (Ok ( [], Dict.empty )) monsterDict
-
-
-makeMonsterAnimation : Dict String Cell -> String -> MonsterModel -> Result Error ( List (Svg Msg), Dict String MonsterModel ) -> Result Error ( List (Svg Msg), Dict String MonsterModel )
-makeMonsterAnimation playField key monster animationsAndMonstersResult =
-    case animationsAndMonstersResult of
+tryMakeMonsterAnimationAndAdjustModel : MonsterModel -> Dict String Cell -> Result Error ( List (Svg Msg), MonsterModel )
+tryMakeMonsterAnimationAndAdjustModel monster playField =
+    let
+        monsterCellResult =
+            tryGetCellFromPlayFieldByCoordinate monster.coordinate playField
+    in
+    case monsterCellResult of
         Err err ->
-            Err err
+            Err
+                { method = "tryMakeMonsterAnimationsAndAdjustModel - " ++ err.method
+                , error = "Monster coordinate is not in our dict. - " ++ err.error
+                }
 
-        Ok ( animationList, newMonsterDict ) ->
-            let
-                monsterCellResult =
-                    tryGetCellFromPlayFieldByKey key playField
-            in
-            case monsterCellResult of
-                Err err ->
+        Ok monsterCell ->
+            case monsterCell.content of
+                Empty ->
                     Err
-                        { method = "makeMonsterAnimation - " ++ err.method
-                        , error = "Monster coordinate is not in our dict. - " ++ err.error
+                        { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                        , error = "Monster coordinate is empty. " ++ coordinateToString monster.coordinate
                         }
 
-                Ok monsterCell ->
-                    case monsterCell.content of
-                        Empty ->
-                            Err
-                                { method = "makeMonsterAnimation"
-                                , error = "Monster coordinate is empty. " ++ key
-                                }
+                Hero ->
+                    Err
+                        { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                        , error = "Monster coordinate contains a hero"
+                        }
 
-                        Hero ->
-                            Err
-                                { method = "makeMonsterAnimation"
-                                , error = "Monster coordinate contains a hero"
-                                }
+                Monster specie ->
+                    if specie /= monster.specie then
+                        Err
+                            { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                            , error = "Monster specie is not the same as cell content."
+                            }
 
-                        Monster specie ->
-                            if specie /= monster.specie then
+                    else
+                        case monster.action of
+                            Moving ->
+                                let
+                                    makeMonsterMoveAnimationResult =
+                                        tryMakeMonsterMoveAnimationAndUpdateModel monster playField
+                                in
+                                case makeMonsterMoveAnimationResult of
+                                    Err error ->
+                                        Err error
+
+                                    Ok ( monsterMoveAnimation, updatedMonster ) ->
+                                        Ok ( [ monsterMoveAnimation ], updatedMonster )
+
+                            Attacking ->
                                 Err
-                                    { method = "makeMonsterAnimation"
-                                    , error = "Monster specie is not the same as cell content."
+                                    { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                                    , error = "TODO make attack animations"
                                     }
 
-                            else
-                                case monster.action of
-                                    Moving ->
-                                        let
-                                            makeMonsterMoveAnimationResult =
-                                                tryMakeMonsterMoveAnimationAndUpdateModel monster playField
-                                        in
-                                        case makeMonsterMoveAnimationResult of
-                                            Err error ->
-                                                Err error
-
-                                            Ok ( monsterMoveAnimation, updatedMonster ) ->
-                                                let
-                                                    updatedMonsterDict =
-                                                        Dict.insert (makePlayFieldDictKeyFromCoordinate updatedMonster.coordinate) updatedMonster newMonsterDict
-                                                in
-                                                Ok ( monsterMoveAnimation :: animationList, updatedMonsterDict )
-
-                                    Attacking ->
-                                        let
-                                            updatedMonsterDict =
-                                                Dict.insert key monster newMonsterDict
-                                        in
-                                        -- TODO make attack animation
-                                        Ok ( animationList, updatedMonsterDict )
-
-                        Obstacle _ ->
-                            Err
-                                { method = "makeMonsterAnimation"
-                                , error = "Monster coordinate contains an obstacle"
-                                }
+                Obstacle _ ->
+                    Err
+                        { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                        , error = "Monster coordinate contains an obstacle"
+                        }
 
 
 tryMakeMonsterMoveAnimationAndUpdateModel : MonsterModel -> Dict String Cell -> Result Error ( Svg Msg, MonsterModel )

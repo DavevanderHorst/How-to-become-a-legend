@@ -34,7 +34,7 @@ handleHeroAttack model attackedCell damage =
                     makeAttackAnimationSvgs currentHeroCell attackedCell damage
 
                 finishedLevel =
-                    { updatedLevel | currentAnimations = animations }
+                    { updatedLevel | animations = animations }
 
                 animationIsDoneCommand =
                     Process.sleep (toFloat <| heroAttackAnimationDuration) |> Task.perform (always HeroAnimationIsDone)

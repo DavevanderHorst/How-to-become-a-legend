@@ -1,9 +1,12 @@
-module Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, removeMonstersFromPlayFieldUnSafe, removeStepsFromPlayField, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe, setStepsForCoordinateInPlayFieldIfEmptyOrMonster)
+module Functions.PlayField.Set exposing (..)
 
 import Dict exposing (Dict)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.ToString exposing (cellContentToString)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (PlayField)
+import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Types exposing (CellContent(..), Specie)
 
@@ -20,13 +23,29 @@ setContentToHero =
         (\old -> { old | content = Hero })
 
 
-setMonstersInPlayFieldUnsafe : Dict String MonsterModel -> Dict String Cell -> Dict String Cell
-setMonstersInPlayFieldUnsafe monsterDict playField =
-    Dict.foldl setMonsterInPlayFieldUnsafe playField monsterDict
+trySetMonsterInPlayField : MonsterModel -> Dict String Cell -> Result Error (Dict String Cell)
+trySetMonsterInPlayField monster playField =
+    let
+        monsterCellResult =
+            tryGetCellFromPlayFieldByCoordinate monster.coordinate playField
+    in
+    case monsterCellResult of
+        Err err ->
+            Err { method = "trySetMonsterInPlayField - " ++ err.method, error = err.error }
+
+        Ok monsterCell ->
+            if monsterCell.content == Empty then
+                Ok (setMonsterInPlayFieldUnsafe monster playField)
+
+            else
+                Err
+                    { method = "trySetMonsterInPlayField"
+                    , error = "Cell content is not empty for placing monster : " ++ cellContentToString monsterCell.content
+                    }
 
 
-setMonsterInPlayFieldUnsafe : String -> MonsterModel -> Dict String Cell -> Dict String Cell
-setMonsterInPlayFieldUnsafe _ monster playField =
+setMonsterInPlayFieldUnsafe : MonsterModel -> Dict String Cell -> Dict String Cell
+setMonsterInPlayFieldUnsafe monster playField =
     updateGridCellDict monster.coordinate (setContentToMonster monster.specie) playField
 
 
@@ -48,13 +67,8 @@ setContentToEmpty =
         (\old -> { old | content = Empty })
 
 
-removeMonstersFromPlayFieldUnSafe : Dict String MonsterModel -> Dict String Cell -> Dict String Cell
-removeMonstersFromPlayFieldUnSafe monsterDict playField =
-    Dict.foldl removeMonsterInPlayFieldUnsafe playField monsterDict
-
-
-removeMonsterInPlayFieldUnsafe : String -> MonsterModel -> Dict String Cell -> Dict String Cell
-removeMonsterInPlayFieldUnsafe _ monster playField =
+removeMonsterFromPlayFieldUnsafe : MonsterModel -> Dict String Cell -> Dict String Cell
+removeMonsterFromPlayFieldUnsafe monster playField =
     updateGridCellDict monster.coordinate setContentToEmpty playField
 
 

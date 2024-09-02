@@ -1,6 +1,6 @@
 module Levels.TestLevel exposing (..)
 
-import Constants.FieldSizes exposing (backGroundMargin, betweenSquaresSize, totalBackGroundMargin, totalSquareSize)
+import Constants.FieldSizes exposing (betweenSquaresSize, totalSquareSize)
 import Dict exposing (Dict)
 import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersAndObstaclesInPlayField)
@@ -26,7 +26,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 14 6 }
+    { coordinate = Coordinate 2 2 }
 
 
 monsterList : List MonsterModel
@@ -35,14 +35,15 @@ monsterList =
       , specie = Dummy
       , action = Moving
       }
-    , { coordinate = Coordinate 11 6
+    , { coordinate = Coordinate 4 9
       , specie = Dummy
       , action = Moving
       }
-    , { coordinate = Coordinate 3 3
-      , specie = Dummy
-      , action = Moving
-      }
+
+    --, { coordinate = Coordinate 3 3
+    --  , specie = Dummy
+    --  , action = Moving
+    --  }
     ]
 
 
@@ -96,10 +97,10 @@ createTestLevel =
                     let
                         playFieldWidth =
                             -- last column and row doesnt need the between squares size
-                            toFloat <| (columns * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+                            toFloat <| (columns * totalSquareSize) + betweenSquaresSize
 
                         playFieldHeight =
-                            toFloat <| (rows * totalSquareSize) + totalBackGroundMargin - betweenSquaresSize
+                            toFloat <| (rows * totalSquareSize) + betweenSquaresSize
 
                         createdPlayField =
                             PlayField playFieldWidth playFieldHeight columns rows playFieldWithHeroAndMonsters
@@ -138,11 +139,11 @@ generatePlayFieldColumns rowNumber colNumber playField =
 
         gridX =
             -- total size of a cell * (column number - 1)
-            -- + black margin of background - 1x the between for the last square
-            (totalSquareSize * (colNumber - 1)) + backGroundMargin
+            -- betweenSquaresSize - 1x the between for the last square
+            (totalSquareSize * (colNumber - 1)) + betweenSquaresSize
 
         gridY =
-            (totalSquareSize * (rowNumber - 1)) + backGroundMargin
+            (totalSquareSize * (rowNumber - 1)) + betweenSquaresSize
 
         createdCell : Cell
         createdCell =

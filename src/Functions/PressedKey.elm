@@ -133,7 +133,7 @@ handlePressedArrowDirection direction model =
                                         finishedLevel =
                                             { updatedLevel
                                                 | heroModel = updatedHeroModel
-                                                , currentAnimations = [ moveAnimation ]
+                                                , animations = [ moveAnimation ]
                                                 , playField = playFieldWithPathFinding
                                             }
 

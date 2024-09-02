@@ -1,11 +1,13 @@
 module Functions.Level exposing (..)
 
-import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe, setMonstersInPlayFieldUnsafe)
+import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe, trySetMonsterInPlayField)
 import Models.Level exposing (Level)
+import Models.MainModel exposing (Error)
+import Models.Monster exposing (MonsterModel)
 
 
-setHeroInPlayFieldInLevel : Level -> Level
-setHeroInPlayFieldInLevel level =
+setHeroBackInPlayFieldInLevel : Level -> Level
+setHeroBackInPlayFieldInLevel level =
     -- unsafe, notting will be checked.
     let
         oldPlayField =
@@ -36,17 +38,22 @@ removeHeroFromPlayFieldInLevel level =
     { level | playField = updatedPlayField }
 
 
-setMonstersInPlayFieldInLevel : Level -> Level
-setMonstersInPlayFieldInLevel level =
-    -- unsafe, notting will be checked.
+trySetMonsterInPlayFieldInLevel : MonsterModel -> Level -> Result Error Level
+trySetMonsterInPlayFieldInLevel monster level =
     let
         oldPlayField =
             level.playField
 
-        fieldWithMonsters =
-            setMonstersInPlayFieldUnsafe level.monsterModels oldPlayField.field
-
-        updatedPlayField =
-            { oldPlayField | field = fieldWithMonsters }
+        fieldWithMonsterResult =
+            trySetMonsterInPlayField monster oldPlayField.field
     in
-    { level | playField = updatedPlayField }
+    case fieldWithMonsterResult of
+        Ok fieldWithMonster ->
+            let
+                updatedPlayField =
+                    { oldPlayField | field = fieldWithMonster }
+            in
+            Ok { level | playField = updatedPlayField }
+
+        Err err ->
+            Err { method = "setMonstersInPlayFieldInLevel - " ++ err.method, error = err.error }

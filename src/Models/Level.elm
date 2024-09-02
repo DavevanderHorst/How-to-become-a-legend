@@ -12,7 +12,7 @@ type alias Level =
     { playField : PlayField
     , heroModel : HeroModel
     , monsterModels : Dict String MonsterModel
-    , currentAnimations : List (Svg Msg)
+    , animations : List (Svg Msg)
     }
 
 

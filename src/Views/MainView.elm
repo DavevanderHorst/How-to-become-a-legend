@@ -1,7 +1,6 @@
 module Views.MainView exposing (..)
 
 import Dict exposing (Dict)
-import Functions.ToString exposing (monsterCoordinatesToString)
 import Html exposing (Html, audio, div, text)
 import Html.Attributes exposing (id, style)
 import Messages exposing (Msg(..))
@@ -31,8 +30,8 @@ mainView model =
     case model.error of
         Nothing ->
             div
-                [ style "width" (makePxStringFromFloat (model.windowSize.width - 100))
-                , style "height" (makePxStringFromFloat (model.windowSize.height - 50))
+                [ style "width" (makePxStringFromFloat (model.windowSize.width - 30))
+                , style "height" (makePxStringFromFloat (model.windowSize.height - 30))
                 , style "display" "flex"
                 , style "justify-content" "center"
                 , style "align-items" "center"
@@ -40,7 +39,8 @@ mainView model =
                 [ Svg.svg
                     [ style "width" (makePxStringFromFloat model.level.playField.screenWidth)
                     , style "height" (makePxStringFromFloat model.level.playField.screenHeight)
-                    , style "background-color" "black"
+                    , style "background-color" "WhiteSmoke"
+                    , style "border" "10px solid"
                     ]
                     (drawLevel model.level)
                 , audio [ id "audio-player", visibility "hidden" ] []
@@ -57,7 +57,7 @@ drawLevel level =
     -- animation must be first in the list, so that it will be rendered last.
     let
         startSvgList =
-            level.currentAnimations
+            level.animations
     in
     Dict.foldl drawCell startSvgList level.playField.field
 

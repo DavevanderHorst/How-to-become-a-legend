@@ -2,6 +2,7 @@ module Messages exposing (..)
 
 import Browser.Dom exposing (Viewport)
 import Models.Cell exposing (Cell)
+import Models.Monster exposing (MonsterModel)
 import Types exposing (PressedKey)
 
 
@@ -11,6 +12,6 @@ type Msg
     | KeyPressed String
     | HandleKeyPressed PressedKey
     | HeroAnimationIsDone
-    | MonsterAnimationsAreDone
+    | MonsterAnimationIsDone MonsterModel (List MonsterModel)
     | HeroAttacks Cell Int
     | MonstersTurn
