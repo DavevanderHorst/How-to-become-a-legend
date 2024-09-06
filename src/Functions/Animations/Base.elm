@@ -1,27 +1,83 @@
 module Functions.Animations.Base exposing (..)
 
+import Dict exposing (Dict)
+import Functions.Animations.Attack exposing (tryMakeMonsterAttackAnimation)
+import Functions.Animations.Move exposing (tryMakeMonsterMoveAnimationAndUpdateModel)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
+import Functions.ToString exposing (coordinateToString)
+import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
-import Simple.Animation as Simple exposing (Animation, Step)
-import Simple.Animation.Animated as Animated
-import Simple.Animation.Property as P
+import Models.MainModel exposing (Error)
+import Models.Monster exposing (MonsterModel)
 import Svg exposing (Svg)
-import Svg.Attributes as SvgAttr
+import Types exposing (Action(..), CellContent(..))
 
 
-makeAnimationStep : Coordinate -> Int -> Step
-makeAnimationStep coordinate duration =
-    Simple.step duration [ P.x (toFloat coordinate.columnNumber), P.y (toFloat coordinate.rowNumber) ]
+tryMakeMonsterAnimationAndAdjustModel : MonsterModel -> Dict String Cell -> Coordinate -> Result Error ( List (Svg Msg), MonsterModel )
+tryMakeMonsterAnimationAndAdjustModel monster playField heroSpot =
+    let
+        monsterCellResult =
+            tryGetCellFromPlayFieldByCoordinate monster.coordinate playField
+    in
+    case monsterCellResult of
+        Err err ->
+            Err
+                { method = "tryMakeMonsterAnimationsAndAdjustModel - " ++ err.method
+                , error = "Monster coordinate is not in our dict. - " ++ err.error
+                }
 
+        Ok monsterCell ->
+            case monsterCell.content of
+                Empty ->
+                    Err
+                        { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                        , error = "Monster coordinate is empty. " ++ coordinateToString monster.coordinate
+                        }
 
-animatedG : Animation -> List (Svg.Attribute msg) -> List (Svg msg) -> Svg msg
-animatedG =
-    animatedSvg Svg.g
+                Hero ->
+                    Err
+                        { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                        , error = "Monster coordinate contains a hero"
+                        }
 
+                Monster specie ->
+                    if specie /= monster.specie then
+                        Err
+                            { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                            , error = "Monster specie is not the same as cell content."
+                            }
 
-animatedSvg =
-    Animated.svg
-        { class = SvgAttr.class
-        }
+                    else
+                        case monster.action of
+                            Moving ->
+                                let
+                                    makeMonsterMoveAnimationResult =
+                                        tryMakeMonsterMoveAnimationAndUpdateModel monster playField
+                                in
+                                case makeMonsterMoveAnimationResult of
+                                    Err error ->
+                                        Err error
+
+                                    Ok ( monsterMoveAnimation, updatedMonster ) ->
+                                        Ok ( [ monsterMoveAnimation ], updatedMonster )
+
+                            Attacking ->
+                                let
+                                    makeMonsterAttackAnimationResult =
+                                        tryMakeMonsterAttackAnimation monsterCell specie heroSpot playField
+                                in
+                                case makeMonsterAttackAnimationResult of
+                                    Err error ->
+                                        Err error
+
+                                    Ok monsterAttackAnimations ->
+                                        Ok ( monsterAttackAnimations, monster )
+
+                Obstacle _ ->
+                    Err
+                        { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                        , error = "Monster coordinate contains an obstacle"
+                        }
 
 
 

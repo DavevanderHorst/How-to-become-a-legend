@@ -1,42 +1,94 @@
-module Functions.Animations.Attack exposing (makeAttackAnimationSvgs)
+module Functions.Animations.Attack exposing (..)
 
 import Constants.FieldSizes exposing (halfSquareSize)
-import Constants.Times exposing (halfHeroAttackAnimationDuration, heroAttackAnimationDuration)
-import Functions.Animations.Base exposing (animatedG, makeAnimationStep)
+import Constants.Monster exposing (getDamageForSpecie)
+import Constants.Times exposing (halfHeroAttackAnimationDuration, halfMonsterAnimationDuration, heroAttackAnimationDuration)
+import Dict exposing (Dict)
+import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
+import Functions.ToString exposing (coordinateToString)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
+import Models.MainModel exposing (Error)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr
+import Types exposing (CellContent(..), Specie)
 import Views.Attributes exposing (baseCellAttributes)
-import Views.MainView exposing (renderHeroCell)
+import Views.MainView exposing (renderHeroCell, renderMonsterCell)
 
 
-makeAttackAnimationSvgs : Cell -> Cell -> Int -> List (Svg Msg)
-makeAttackAnimationSvgs heroSpot nextSpot damage =
+tryMakeMonsterAttackAnimation : Cell -> Specie -> Coordinate -> Dict String Cell -> Result Error (List (Svg Msg))
+tryMakeMonsterAttackAnimation monsterCell specie heroSpot playField =
+    let
+        heroCellResult =
+            tryGetCellFromPlayFieldByCoordinate heroSpot playField
+    in
+    case heroCellResult of
+        Err error ->
+            Err
+                { method = "tryMakeMonsterAttackAnimation - " ++ error.method
+                , error = error.error
+                }
+
+        Ok heroCell ->
+            if heroCell.content /= Hero then
+                Err
+                    { method = "tryMakeMonsterAttackAnimation"
+                    , error = "Hero is not on given coordinate : " ++ coordinateToString heroSpot
+                    }
+
+            else
+                Ok (makeMonsterAttackAnimationSvgs monsterCell specie heroCell)
+
+
+makeMonsterAttackAnimationSvgs : Cell -> Specie -> Cell -> List (Svg Msg)
+makeMonsterAttackAnimationSvgs monsterCell specie heroCell =
     -- AttackAnimation is using coordinates, but we are using the screen positions here.
     let
         heroAttackAnimation =
-            animatedG (makeAttackAnimation heroSpot nextSpot) [] [ renderHeroCell baseCellAttributes ]
+            makeMonsterAttackAnimation monsterCell specie heroCell
+
+        damage =
+            getDamageForSpecie specie
 
         damageAnimation =
-            animatedG (makeDamageAnimation nextSpot) [] [ Svg.text_ attackTextAttributes [ Svg.text (String.fromInt damage) ] ]
+            makeDamageSvgAnimation heroCell damage heroAttackAnimationDuration
     in
     [ heroAttackAnimation, damageAnimation ]
 
 
-attackTextAttributes : List (Attribute msg)
-attackTextAttributes =
-    [ SvgAttr.fill "red"
-    , SvgAttr.fontWeight "950"
-    , SvgAttr.fontFamily "Helvetica"
-    , SvgAttr.stroke "white"
-    ]
+makeMonsterAttackAnimation : Cell -> Specie -> Cell -> Svg Msg
+makeMonsterAttackAnimation monsterCell specie heroCell =
+    makeAttackAnimationSvg monsterCell heroCell halfMonsterAnimationDuration (renderMonsterCell specie baseCellAttributes)
 
 
-makeAttackAnimation : Cell -> Cell -> Animation
-makeAttackAnimation startCell attackedCell =
+makeHeroAttackAnimationSvgs : Cell -> Cell -> Int -> List (Svg Msg)
+makeHeroAttackAnimationSvgs heroCell attackedCell damage =
+    -- AttackAnimation is using coordinates, but we are using the screen positions here.
+    let
+        heroAttackAnimation =
+            makeHeroAttackAnimation heroCell attackedCell
+
+        damageAnimation =
+            makeDamageSvgAnimation heroCell damage heroAttackAnimationDuration
+    in
+    [ heroAttackAnimation, damageAnimation ]
+
+
+makeHeroAttackAnimation : Cell -> Cell -> Svg Msg
+makeHeroAttackAnimation heroCell attackedCell =
+    makeAttackAnimationSvg heroCell attackedCell halfHeroAttackAnimationDuration (renderHeroCell baseCellAttributes)
+
+
+makeAttackAnimationSvg : Cell -> Cell -> Int -> Svg msg -> Svg msg
+makeAttackAnimationSvg baseCell attackedCell duration svg =
+    animatedG (makeAttackAnimation baseCell attackedCell duration) [] [ svg ]
+
+
+makeAttackAnimation : Cell -> Cell -> Int -> Animation
+makeAttackAnimation startCell attackedCell duration =
     let
         xDistanceToAttack =
             (startCell.gridX - attackedCell.gridX) // 2
@@ -54,11 +106,25 @@ makeAttackAnimation startCell attackedCell =
         { startAt = [ P.x (toFloat startCell.gridX), P.y (toFloat startCell.gridY) ]
         , options = []
         }
-        [ makeAnimationStep attackCoordinate halfHeroAttackAnimationDuration, makeAnimationStep startCoordinate halfHeroAttackAnimationDuration ]
+        [ makeAnimationStep attackCoordinate duration, makeAnimationStep startCoordinate duration ]
 
 
-makeDamageAnimation : Cell -> Animation
-makeDamageAnimation startCell =
+makeDamageSvgAnimation : Cell -> Int -> Int -> Svg Msg
+makeDamageSvgAnimation cell damage duration =
+    animatedG (makeDamageAnimation cell duration) [] [ Svg.text_ attackTextAttributes [ Svg.text (String.fromInt damage) ] ]
+
+
+attackTextAttributes : List (Attribute msg)
+attackTextAttributes =
+    [ SvgAttr.fill "red"
+    , SvgAttr.fontWeight "950"
+    , SvgAttr.fontFamily "Helvetica"
+    , SvgAttr.stroke "white"
+    ]
+
+
+makeDamageAnimation : Cell -> Int -> Animation
+makeDamageAnimation startCell duration =
     let
         ( startX, startY ) =
             ( toFloat startCell.gridX, toFloat (startCell.gridY + halfSquareSize) )
@@ -67,4 +133,4 @@ makeDamageAnimation startCell =
         { startAt = [ P.x startX, P.y startY ]
         , options = []
         }
-        [ Simple.step heroAttackAnimationDuration [ P.x startX, P.y startY, P.scale 3 ] ]
+        [ Simple.step duration [ P.x startX, P.y startY, P.scale 3 ] ]

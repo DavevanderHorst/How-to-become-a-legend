@@ -2,7 +2,7 @@ module Functions.Hero.Attack exposing (..)
 
 import Constants.Sounds exposing (heroAttackSound)
 import Constants.Times exposing (heroAttackAnimationDuration)
-import Functions.Animations.Attack exposing (makeAttackAnimationSvgs)
+import Functions.Animations.Attack exposing (makeHeroAttackAnimationSvgs)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
 import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
@@ -31,7 +31,7 @@ handleHeroAttack model attackedCell damage =
                     removeHeroFromPlayFieldInLevel level
 
                 animations =
-                    makeAttackAnimationSvgs currentHeroCell attackedCell damage
+                    makeHeroAttackAnimationSvgs currentHeroCell attackedCell damage
 
                 finishedLevel =
                     { updatedLevel | animations = animations }

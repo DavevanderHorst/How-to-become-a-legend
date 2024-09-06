@@ -25,4 +25,9 @@ halfHeroAttackAnimationDuration =
 
 monsterAnimationDuration : Int
 monsterAnimationDuration =
-    700
+    halfMonsterAnimationDuration * 2
+
+
+halfMonsterAnimationDuration : Int
+halfMonsterAnimationDuration =
+    200

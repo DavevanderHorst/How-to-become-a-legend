@@ -4,10 +4,10 @@ rogue like game
 Next programming steps.
 
 Make monster turn after hero moved.    
-    -- can't make 2 animations at the same time...
-    -- so monster need to do their thing one by one.
+    -- make attack animation
+    -- monsters that are attacking , block there position since they don't move
     -- monsters have settled damage for now and always move towards hero or attack when next to it    
-    -- monster animation need to be made    
+    
 
 when a monster is attacking its spot can't be entered by other monsters.
 test by setting monster in a hallway with hero before, what will monster do then...

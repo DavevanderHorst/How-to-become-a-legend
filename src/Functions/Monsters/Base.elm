@@ -2,7 +2,7 @@ module Functions.Monsters.Base exposing (handleMonsterTurn, handleMonstersTurn)
 
 import Constants.Times exposing (monsterAnimationDuration)
 import Dict exposing (Dict)
-import Functions.Animations.Move exposing (tryMakeMonsterAnimationAndAdjustModel)
+import Functions.Animations.Base exposing (tryMakeMonsterAnimationAndAdjustModel)
 import Functions.Coordinate exposing (areCoordinatesNextToEachOther)
 import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict)
 import Functions.PlayField.Set exposing (removeMonsterFromPlayFieldUnsafe)
@@ -36,10 +36,10 @@ handleMonstersTurn model =
         updatedMonstersList =
             Dict.foldl putMonsterInList [] updatedMonsters
 
-        levelWithoutMonsters =
+        levelWithEmptyMonsterDict =
             { oldLevel | monsterModels = Dict.empty }
     in
-    handleMonsterTurn updatedMonstersList { model | level = levelWithoutMonsters }
+    handleMonsterTurn updatedMonstersList { model | level = levelWithEmptyMonsterDict }
 
 
 handleMonsterTurn : List MonsterModel -> MainModel -> ( MainModel, Cmd Msg )
@@ -66,7 +66,7 @@ handleMonsterTurn monstersToDoList model =
         Just firstMonster ->
             let
                 makeAnimationsResult =
-                    tryMakeMonsterAnimationAndAdjustModel firstMonster oldPlayField.field
+                    tryMakeMonsterAnimationAndAdjustModel firstMonster oldPlayField.field oldLevel.heroModel.coordinate
             in
             case makeAnimationsResult of
                 -- we make from our monster dict a list
