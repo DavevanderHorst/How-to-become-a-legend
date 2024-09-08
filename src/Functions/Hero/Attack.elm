@@ -3,9 +3,8 @@ module Functions.Hero.Attack exposing (..)
 import Constants.Sounds exposing (heroAttackSound)
 import Constants.Times exposing (heroAttackAnimationDuration)
 import Functions.Animations.Attack exposing (makeHeroAttackAnimationSvgs)
-import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
-import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Cell)
 import Models.MainModel exposing (MainModel)
@@ -22,19 +21,16 @@ handleHeroAttack model attackedCell damage =
             model.level
 
         currentHeroCellResult =
-            tryGetCellFromPlayFieldByKey (makePlayFieldDictKeyFromCoordinate level.heroModel.coordinate) level.playField.field
+            tryGetCellFromPlayFieldByKey (makeDictKeyFromCoordinate level.heroModel.coordinate) level.playField.field
     in
     case currentHeroCellResult of
         Ok currentHeroCell ->
             let
-                updatedLevel =
-                    removeHeroFromPlayFieldInLevel level
-
                 animations =
                     makeHeroAttackAnimationSvgs currentHeroCell attackedCell damage
 
                 finishedLevel =
-                    { updatedLevel | animations = animations }
+                    { level | animations = animations }
 
                 animationIsDoneCommand =
                     Process.sleep (toFloat <| heroAttackAnimationDuration) |> Task.perform (always HeroAnimationIsDone)

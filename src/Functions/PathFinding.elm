@@ -4,15 +4,16 @@ import Dict exposing (Dict)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
 import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInPlayField, tryGetCellFromPlayFieldByCoordinate)
-import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMonster)
+import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (PlayField)
 import Models.MainModel exposing (Error)
-import Types exposing (CellContent(..), Direction(..))
+import Models.Monster exposing (MonsterModel)
+import Types exposing (Action(..), CellContent(..), Direction(..))
 
 
-setPathFindingInPlayField : Coordinate -> PlayField -> PlayField
-setPathFindingInPlayField heroSpot playField =
+setPathFindingInPlayField : Coordinate -> PlayField -> Dict String MonsterModel -> PlayField
+setPathFindingInPlayField heroSpot playField monsterDict =
     let
         -- first we set the first circle, so we have a start
         -- we calculate how many rounds we need to fully circle our field
@@ -31,13 +32,13 @@ setPathFindingInPlayField heroSpot playField =
         doneField =
             -- start at round 2
             -- 0 steps, since we start, 3 steps for our second round, before we switch direction.
-            fillStepsForRestOfPlayField 0 3 2 calculatedRoundsNeeded startRoundCoordinate [] [] playFieldWithFirstRoundDone
+            fillStepsForRestOfPlayField 0 3 2 calculatedRoundsNeeded startRoundCoordinate [] [] playFieldWithFirstRoundDone monsterDict
     in
     { playField | field = doneField }
 
 
-fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> List (List Coordinate) -> Dict String Cell -> Dict String Cell
-fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot todoCoordinates coordinatesByRoundList playField =
+fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> List (List Coordinate) -> Dict String Cell -> Dict String MonsterModel -> Dict String Cell
+fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot todoCoordinates coordinatesByRoundList playField monsterDict =
     -- first we go right around, update playField and save all found PathFindingCoordinates in a list
     -- We save all these by round, and when we foldl, we can go back rounds.
     -- We go left around, doing this by starting with the last one we put in the list, and check all coordinates again.
@@ -54,6 +55,7 @@ fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds st
                 startSpot
                 playField
                 []
+                monsterDict
 
         ( roundDoneInPlayField, updatedTodoCoordinates ) =
             checkFoundCoordinatesAgain
@@ -84,6 +86,7 @@ fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds st
             updatedTodoCoordinates
             finishedCoordinatesByRoundList
             finishedPlayField
+            monsterDict
 
 
 checkOldRoundsForChanges : List (List Coordinate) -> Dict String Cell -> Dict String Cell
@@ -303,8 +306,13 @@ isBlocked content =
         Hero ->
             True
 
-        Monster _ ->
-            False
+        Monster _ action ->
+            case action of
+                Moving ->
+                    False
+
+                Attacking ->
+                    True
 
         Obstacle _ ->
             True
@@ -317,8 +325,9 @@ goRightAroundAndFindLowestSteps :
     -> Coordinate
     -> Dict String Cell
     -> List Coordinate
+    -> Dict String MonsterModel
     -> ( List Coordinate, Dict String Cell )
-goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundCoordinatesList =
+goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundCoordinatesList monsterDict =
     let
         currentCellResult =
             tryGetCellFromPlayFieldByCoordinate currentCoordinate playField
@@ -336,8 +345,14 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
                         Hero ->
                             ( foundCoordinatesList, playField )
 
-                        Monster _ ->
-                            findLowestSteps currentCoordinate foundCoordinatesList playField
+                        Monster _ action ->
+                            case action of
+                                Moving ->
+                                    findLowestSteps currentCoordinate foundCoordinatesList playField
+
+                                Attacking ->
+                                    -- an attacking monster is blocking his cell. So no steps set.
+                                    ( foundCoordinatesList, playField )
 
                         Obstacle _ ->
                             ( foundCoordinatesList, playField )
@@ -354,14 +369,14 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
                 nextCoordinate =
                     getNextCoordinateForDirection nextDirection currentCoordinate
             in
-            goRightAroundAndFindLowestSteps nextDirection 0 maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesList
+            goRightAroundAndFindLowestSteps nextDirection 0 maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesList monsterDict
 
     else
         let
             nextCoordinate =
                 getNextCoordinateForDirection currentDirection currentCoordinate
         in
-        goRightAroundAndFindLowestSteps currentDirection (doneSteps + 1) maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesList
+        goRightAroundAndFindLowestSteps currentDirection (doneSteps + 1) maxSteps nextCoordinate updatedPlayField updatedFoundCoordinatesList monsterDict
 
 
 findLowestSteps : Coordinate -> List Coordinate -> Dict String Cell -> ( List Coordinate, Dict String Cell )
@@ -389,7 +404,7 @@ setFoundStepsInPlayFieldByCoordinate : Int -> Coordinate -> Dict String Cell -> 
 setFoundStepsInPlayFieldByCoordinate steps coordinate playField =
     -- found steps is from a coordinate 1 away, so need to add one.
     -- we checked that cell is empty, so we know it is.
-    setStepsForCoordinateInPlayFieldIfEmptyOrMonster (steps + 1) coordinate playField
+    setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster (steps + 1) coordinate playField
 
 
 findLowestStepsAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Int
@@ -522,27 +537,27 @@ setStepsAroundHero heroSpot playField =
             2
 
         upDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster straightSteps (getNextCoordinateForDirection Up heroSpot) playField
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Up heroSpot) playField
 
         upRightDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster diagonalSteps (getNextCoordinateForDirection UpRight heroSpot) upDone
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection UpRight heroSpot) upDone
 
         rightDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster straightSteps (getNextCoordinateForDirection Right heroSpot) upRightDone
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Right heroSpot) upRightDone
 
         downRightDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster diagonalSteps (getNextCoordinateForDirection DownRight heroSpot) rightDone
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection DownRight heroSpot) rightDone
 
         downDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster straightSteps (getNextCoordinateForDirection Down heroSpot) downRightDone
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Down heroSpot) downRightDone
 
         downLeftDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster diagonalSteps (getNextCoordinateForDirection DownLeft heroSpot) downDone
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection DownLeft heroSpot) downDone
 
         leftDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMonster straightSteps (getNextCoordinateForDirection Left heroSpot) downLeftDone
+            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Left heroSpot) downLeftDone
     in
-    setStepsForCoordinateInPlayFieldIfEmptyOrMonster diagonalSteps (getNextCoordinateForDirection UpLeft heroSpot) leftDone
+    setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection UpLeft heroSpot) leftDone
 
 
 calculateRoundsNeededForPathFinding : Coordinate -> Int -> Int -> Int

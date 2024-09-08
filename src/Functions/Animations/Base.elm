@@ -40,11 +40,17 @@ tryMakeMonsterAnimationAndAdjustModel monster playField heroSpot =
                         , error = "Monster coordinate contains a hero"
                         }
 
-                Monster specie ->
+                Monster specie action ->
                     if specie /= monster.specie then
                         Err
                             { method = "tryMakeMonsterAnimationsAndAdjustModel"
                             , error = "Monster specie is not the same as cell content."
+                            }
+
+                    else if action /= monster.action then
+                        Err
+                            { method = "tryMakeMonsterAnimationsAndAdjustModel"
+                            , error = "Monster action is not the same as cell content."
                             }
 
                     else

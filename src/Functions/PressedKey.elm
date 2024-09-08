@@ -5,7 +5,6 @@ import Constants.Times exposing (heroMoveAnimationDuration)
 import Functions.Animations.Move exposing (makeHeroMoveAnimationSvg)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
-import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
 import Functions.PlayField.Set exposing (removeStepsFromPlayField)
 import Functions.Random exposing (rollHeroDamage)
@@ -78,16 +77,24 @@ handlePressedArrowDirection direction model =
 
         Ok nextCell ->
             -- found a cell, now we check if it possible to move too, or if monster so we now if we move or attack.
+            -- we remove hero and steps from playField
+            let
+                oldLevel =
+                    model.level
+
+                playFieldWithRemovedPathFinding =
+                    removeStepsFromPlayField oldLevel.playField
+
+                updatedLevel =
+                    removeHeroFromPlayFieldInLevel { oldLevel | playField = playFieldWithRemovedPathFinding }
+            in
             case nextCell.content of
                 Empty ->
                     -- we can move
                     -- set move animation, for this we also need the current hero cell.
                     let
-                        level =
-                            model.level
-
                         currentHeroCellResult =
-                            tryGetCellFromPlayFieldByCoordinate level.heroModel.coordinate level.playField.field
+                            tryGetCellFromPlayFieldByCoordinate updatedLevel.heroModel.coordinate updatedLevel.playField.field
                     in
                     case currentHeroCellResult of
                         -- we remove hero from play field, and set the new coordinate as hero coordinate
@@ -96,9 +103,6 @@ handlePressedArrowDirection direction model =
                         -- if move animation is finished, we set hero on this new spot.
                         Ok currentHeroCell ->
                             let
-                                updatedLevel =
-                                    removeHeroFromPlayFieldInLevel level
-
                                 moveAnimation =
                                     makeHeroMoveAnimationSvg currentHeroCell nextCell
 
@@ -111,17 +115,10 @@ handlePressedArrowDirection direction model =
                                 updatedHeroModel =
                                     { oldHeroModel | coordinate = newHeroCoordinate }
 
-                                playFieldWithRemovedPathFinding =
-                                    removeStepsFromPlayField updatedLevel.playField
-
-                                playFieldWithPathFinding =
-                                    setPathFindingInPlayField newHeroCoordinate playFieldWithRemovedPathFinding
-
                                 finishedLevel =
                                     { updatedLevel
                                         | heroModel = updatedHeroModel
                                         , animations = [ moveAnimation ]
-                                        , playField = playFieldWithPathFinding
                                     }
 
                                 nextCommand =
@@ -147,14 +144,14 @@ handlePressedArrowDirection direction model =
                     in
                     ( { model | error = Just newError }, Cmd.none )
 
-                Monster _ ->
+                Monster _ _ ->
                     -- need to roll damage die then,
                     -- we move into a monster, so attack!!
                     -- make an attack animation
                     -- we need current hero cell again for screen positions
                     -- make a sound
                     -- show damage above monster head
-                    ( { model | playerInput = Stopped }, Random.generate (HeroAttacks nextCell) rollHeroDamage )
+                    ( { model | playerInput = Stopped, level = updatedLevel }, Random.generate (HeroAttacks nextCell) rollHeroDamage )
 
                 Obstacle _ ->
                     -- cant move here, its blocked, make bump sound.

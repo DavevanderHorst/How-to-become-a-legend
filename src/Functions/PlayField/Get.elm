@@ -1,7 +1,7 @@
 module Functions.PlayField.Get exposing (..)
 
 import Dict exposing (Dict)
-import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (Error)
 
@@ -27,7 +27,7 @@ tryGetCellFromPlayFieldByCoordinate : Coordinate -> Dict String Cell -> Result E
 tryGetCellFromPlayFieldByCoordinate coordinate playField =
     let
         key =
-            makePlayFieldDictKeyFromCoordinate coordinate
+            makeDictKeyFromCoordinate coordinate
     in
     tryGetCellFromPlayFieldByKey key playField
 
@@ -36,7 +36,7 @@ getMaybeStepsForCoordinateInPlayField : Coordinate -> Dict String Cell -> Maybe 
 getMaybeStepsForCoordinateInPlayField coordinate playField =
     let
         key =
-            makePlayFieldDictKeyFromCoordinate coordinate
+            makeDictKeyFromCoordinate coordinate
 
         getCellResult =
             tryGetCellFromPlayFieldByKey key playField

@@ -1,13 +1,14 @@
-module Functions.Monsters.Base exposing (handleMonsterTurn, handleMonstersTurn)
+module Functions.Monsters.Base exposing (..)
 
 import Constants.Times exposing (monsterAnimationDuration)
 import Dict exposing (Dict)
 import Functions.Animations.Base exposing (tryMakeMonsterAnimationAndAdjustModel)
 import Functions.Coordinate exposing (areCoordinatesNextToEachOther)
-import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict)
+import Functions.Monsters.MonsterDict exposing (addMonsterToMonsterDictUnsafe)
+import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict, updateMonsterInPlayFieldUnsafe)
 import Functions.PlayField.Set exposing (removeMonsterFromPlayFieldUnsafe)
 import Messages exposing (Msg(..))
-import Models.Cell exposing (Coordinate)
+import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (Level)
 import Models.MainModel exposing (Error, MainModel)
 import Models.Monster exposing (MonsterModel)
@@ -23,23 +24,19 @@ putMonsterInList _ monster monsterList =
 
 handleMonstersTurn : MainModel -> ( MainModel, Cmd Msg )
 handleMonstersTurn model =
-    -- we check what action each monster is going to do.
     -- we make a list of our monster, and that we use to make animations for them 1 by 1
     -- we empty our monster dict, and we put them back after we made the animation,
     let
         oldLevel =
             model.level
 
-        updatedMonsters =
-            checkActionTodoForMonsters oldLevel.heroModel.coordinate oldLevel.monsterModels
-
-        updatedMonstersList =
-            Dict.foldl putMonsterInList [] updatedMonsters
+        monstersList =
+            Dict.foldl putMonsterInList [] oldLevel.monsterModels
 
         levelWithEmptyMonsterDict =
             { oldLevel | monsterModels = Dict.empty }
     in
-    handleMonsterTurn updatedMonstersList { model | level = levelWithEmptyMonsterDict }
+    handleMonsterTurn monstersList { model | level = levelWithEmptyMonsterDict }
 
 
 handleMonsterTurn : List MonsterModel -> MainModel -> ( MainModel, Cmd Msg )
@@ -96,15 +93,44 @@ handleMonsterTurn monstersToDoList model =
                     ( { model | level = updatedLevel }, nextCommand )
 
 
-checkActionTodoForMonsters : Coordinate -> Dict String MonsterModel -> Dict String MonsterModel
-checkActionTodoForMonsters heroCoordinate monsterDict =
-    Dict.map (setMonsterAction heroCoordinate) monsterDict
+setMonsterActions : Level -> Level
+setMonsterActions level =
+    let
+        oldPlayField =
+            level.playField
+
+        ( updatedMonsters, updatedField ) =
+            checkActionTodoForMonsters level.heroModel.coordinate level.monsterModels oldPlayField.field
+
+        newPlayField =
+            { oldPlayField | field = updatedField }
+    in
+    { level | monsterModels = updatedMonsters, playField = newPlayField }
 
 
-setMonsterAction : Coordinate -> String -> MonsterModel -> MonsterModel
-setMonsterAction heroCoordinate _ monster =
-    if areCoordinatesNextToEachOther monster.coordinate heroCoordinate then
-        { monster | action = Attacking }
+checkActionTodoForMonsters : Coordinate -> Dict String MonsterModel -> Dict String Cell -> ( Dict String MonsterModel, Dict String Cell )
+checkActionTodoForMonsters heroCoordinate monsterDict playField =
+    Dict.foldl (setMonsterAction heroCoordinate) ( Dict.empty, playField ) monsterDict
 
-    else
-        { monster | action = Moving }
+
+setMonsterAction : Coordinate -> String -> MonsterModel -> ( Dict String MonsterModel, Dict String Cell ) -> ( Dict String MonsterModel, Dict String Cell )
+setMonsterAction heroCoordinate _ monster ( monsterDict, playField ) =
+    let
+        updatedMonster =
+            if areCoordinatesNextToEachOther monster.coordinate heroCoordinate then
+                { monster | action = Attacking }
+
+            else
+                { monster | action = Moving }
+
+        updatedMonsterDict =
+            addMonsterToMonsterDictUnsafe updatedMonster monsterDict
+
+        updatedPlayField =
+            if monster.action == updatedMonster.action then
+                playField
+
+            else
+                updateMonsterInPlayFieldUnsafe updatedMonster playField
+    in
+    ( updatedMonsterDict, updatedPlayField )

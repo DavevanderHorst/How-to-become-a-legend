@@ -4,7 +4,7 @@ import Constants.FieldSizes exposing (betweenSquaresSize, totalSquareSize)
 import Dict exposing (Dict)
 import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PlayField.Insert exposing (insertMonstersInMonsterDict, trySetHeroInPlayField, trySetMonstersAndObstaclesInPlayField)
-import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Hero exposing (HeroModel)
 import Models.Level exposing (Level, PlayField)
@@ -31,11 +31,11 @@ heroStartModel =
 
 monsterList : List MonsterModel
 monsterList =
-    [ { coordinate = Coordinate 9 6
+    [ { coordinate = Coordinate 2 3
       , specie = Dummy
       , action = Moving
       }
-    , { coordinate = Coordinate 4 9
+    , { coordinate = Coordinate 2 5
       , specie = Dummy
       , action = Moving
       }
@@ -105,12 +105,12 @@ createTestLevel =
                         createdPlayField =
                             PlayField playFieldWidth playFieldHeight columns rows playFieldWithHeroAndMonsters
 
-                        finishedPlayField =
-                            setPathFindingInPlayField heroStartModel.coordinate createdPlayField
-
                         monsterDict =
                             -- if monsters are successfully set in play field, then everything is oke.
                             insertMonstersInMonsterDict monsterList Dict.empty
+
+                        finishedPlayField =
+                            setPathFindingInPlayField heroStartModel.coordinate createdPlayField monsterDict
                     in
                     Ok (Level finishedPlayField heroStartModel monsterDict [])
 
@@ -135,7 +135,7 @@ generatePlayFieldColumns : Int -> Int -> Dict String Cell -> Dict String Cell
 generatePlayFieldColumns rowNumber colNumber playField =
     let
         key =
-            makePlayFieldDictKeyFromCoordinate (Coordinate colNumber rowNumber)
+            makeDictKeyFromCoordinate (Coordinate colNumber rowNumber)
 
         gridX =
             -- total size of a cell * (column number - 1)

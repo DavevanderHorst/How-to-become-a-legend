@@ -2,13 +2,13 @@ module Functions.PlayField.Insert exposing (..)
 
 import Dict exposing (Dict)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
-import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString, obstacleTypeToString, specieToString)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Models.Obstacle exposing (ObstacleModel)
-import Types exposing (CellContent(..), ObstacleType, Specie)
+import Types exposing (Action(..), CellContent(..), ObstacleType, Specie)
 
 
 insertMonstersInMonsterDict : List MonsterModel -> Dict String MonsterModel -> Dict String MonsterModel
@@ -20,7 +20,7 @@ insertMonsterInToMonsterDict : MonsterModel -> Dict String MonsterModel -> Dict 
 insertMonsterInToMonsterDict monster dict =
     let
         dictKey =
-            makePlayFieldDictKeyFromCoordinate monster.coordinate
+            makeDictKeyFromCoordinate monster.coordinate
     in
     insertIntoDict monster dictKey dict
 
@@ -53,7 +53,7 @@ trySetObstaclesInPlayField obstacle playFieldResult =
         Ok playField ->
             let
                 dictKey =
-                    makePlayFieldDictKeyFromCoordinate obstacle.coordinate
+                    makeDictKeyFromCoordinate obstacle.coordinate
 
                 getCellResult =
                     tryGetCellFromPlayFieldByKey dictKey playField
@@ -77,6 +77,15 @@ trySetObstaclesInPlayField obstacle playFieldResult =
                             }
 
 
+updateMonsterInPlayFieldUnsafe : MonsterModel -> Dict String Cell -> Dict String Cell
+updateMonsterInPlayFieldUnsafe monster playField =
+    let
+        dictKey =
+            makeDictKeyFromCoordinate monster.coordinate
+    in
+    updateGridCellDict dictKey (setCellContentToMonster monster.specie monster.action) playField
+
+
 trySetMonsterInPlayField : MonsterModel -> Result Error (Dict String Cell) -> Result Error (Dict String Cell)
 trySetMonsterInPlayField monster playFieldResult =
     case playFieldResult of
@@ -86,7 +95,7 @@ trySetMonsterInPlayField monster playFieldResult =
         Ok playField ->
             let
                 dictKey =
-                    makePlayFieldDictKeyFromCoordinate monster.coordinate
+                    makeDictKeyFromCoordinate monster.coordinate
 
                 getCellResult =
                     tryGetCellFromPlayFieldByKey dictKey playField
@@ -97,7 +106,7 @@ trySetMonsterInPlayField monster playFieldResult =
 
                 Ok cell ->
                     if cell.content == Empty then
-                        Ok (updateGridCellDict dictKey (setCellContentToMonster monster.specie) playField)
+                        Ok (updateGridCellDict dictKey (setCellContentToMonster monster.specie monster.action) playField)
 
                     else
                         Err
@@ -114,7 +123,7 @@ trySetHeroInPlayField : Coordinate -> Dict String Cell -> Result Error (Dict Str
 trySetHeroInPlayField coordinate playField =
     let
         dictKey =
-            makePlayFieldDictKeyFromCoordinate coordinate
+            makeDictKeyFromCoordinate coordinate
 
         getCellResult =
             tryGetCellFromPlayFieldByKey dictKey playField
@@ -139,9 +148,9 @@ setCellContentToHero =
     setCellContent Hero
 
 
-setCellContentToMonster : Specie -> Maybe Cell -> Maybe Cell
-setCellContentToMonster specie =
-    setCellContent (Monster specie)
+setCellContentToMonster : Specie -> Action -> Maybe Cell -> Maybe Cell
+setCellContentToMonster specie action =
+    setCellContent (Monster specie action)
 
 
 setCellContentToObstacle : ObstacleType -> Maybe Cell -> Maybe Cell

@@ -20,7 +20,7 @@ cellContentToString content =
         Hero ->
             "Hero"
 
-        Monster specie ->
+        Monster specie _ ->
             "Monster - " ++ specieToString specie
 
         Obstacle obstacleType ->

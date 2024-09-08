@@ -7,7 +7,8 @@ import Constants.Times exposing (waitTimeBetweenAnimations)
 import Dict
 import Functions.Hero.Attack exposing (handleHeroAttack)
 import Functions.Level exposing (setHeroBackInPlayFieldInLevel, trySetMonsterInPlayFieldInLevel)
-import Functions.Monsters.Base exposing (handleMonsterTurn, handleMonstersTurn)
+import Functions.Monsters.Base exposing (handleMonsterTurn, handleMonstersTurn, setMonsterActions)
+import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PressedKey exposing (handleKeyPressed, handlePressedKey)
 import Json.Decode as Decode
 import Levels.TestLevel exposing (createTestLevel)
@@ -78,15 +79,22 @@ update msg model =
             handlePressedKey pressedKey model
 
         HeroAnimationIsDone ->
-            -- hero is removed for the animation, so needs to be set back.
+            -- hero and pathFinding are removed for the animation, so needs to be set back.
             -- remove made animations
             -- after hero is done its monsters turn now.
+            -- so we check positions of monsters and set their action.
             let
                 updatedLevel =
                     setHeroBackInPlayFieldInLevel model.level
 
+                levelWithMonsterActionsSet =
+                    setMonsterActions updatedLevel
+
+                playFieldWithPathFinding =
+                    setPathFindingInPlayField levelWithMonsterActionsSet.heroModel.coordinate levelWithMonsterActionsSet.playField levelWithMonsterActionsSet.monsterModels
+
                 finishedLevel =
-                    { updatedLevel | animations = [] }
+                    { levelWithMonsterActionsSet | animations = [], playField = playFieldWithPathFinding }
             in
             ( { model | level = finishedLevel }, Process.sleep waitTimeBetweenAnimations |> Task.perform (always MonstersTurn) )
 

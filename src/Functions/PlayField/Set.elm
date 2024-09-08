@@ -2,13 +2,13 @@ module Functions.PlayField.Set exposing (..)
 
 import Dict exposing (Dict)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
-import Functions.PlayField.KeyHelpers exposing (makePlayFieldDictKeyFromCoordinate)
+import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (PlayField)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
-import Types exposing (CellContent(..), Specie)
+import Types exposing (Action(..), CellContent(..), Specie)
 
 
 setHeroInPlayFieldUnsafe : Coordinate -> Dict String Cell -> Dict String Cell
@@ -46,13 +46,13 @@ trySetMonsterInPlayField monster playField =
 
 setMonsterInPlayFieldUnsafe : MonsterModel -> Dict String Cell -> Dict String Cell
 setMonsterInPlayFieldUnsafe monster playField =
-    updateGridCellDict monster.coordinate (setContentToMonster monster.specie) playField
+    updateGridCellDict monster.coordinate (setContentToMonster monster.specie monster.action) playField
 
 
-setContentToMonster : Specie -> Maybe Cell -> Maybe Cell
-setContentToMonster specie =
+setContentToMonster : Specie -> Action -> Maybe Cell -> Maybe Cell
+setContentToMonster specie action =
     Maybe.map
-        (\old -> { old | content = Monster specie })
+        (\old -> { old | content = Monster specie action })
 
 
 removeHeroFromPlayFieldUnsafe : Coordinate -> Dict String Cell -> Dict String Cell
@@ -81,9 +81,9 @@ removeStepsFromPlayField playField =
     { playField | field = newField }
 
 
-setStepsForCoordinateInPlayFieldIfEmptyOrMonster : Int -> Coordinate -> Dict String Cell -> Dict String Cell
-setStepsForCoordinateInPlayFieldIfEmptyOrMonster steps coordinate playField =
-    updateGridCellDict coordinate (setStepsIfEmptyOrMonster steps) playField
+setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster : Int -> Coordinate -> Dict String Cell -> Dict String Cell
+setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster steps coordinate playField =
+    updateGridCellDict coordinate (setStepsIfEmptyOrMovingMonster steps) playField
 
 
 setStepsToNothing : String -> Cell -> Cell
@@ -91,8 +91,8 @@ setStepsToNothing _ =
     \old -> { old | stepsToHero = Nothing }
 
 
-setStepsIfEmptyOrMonster : Int -> Maybe Cell -> Maybe Cell
-setStepsIfEmptyOrMonster steps =
+setStepsIfEmptyOrMovingMonster : Int -> Maybe Cell -> Maybe Cell
+setStepsIfEmptyOrMovingMonster steps =
     Maybe.map
         (\old ->
             case old.content of
@@ -102,8 +102,13 @@ setStepsIfEmptyOrMonster steps =
                 Hero ->
                     old
 
-                Monster _ ->
-                    { old | stepsToHero = Just steps }
+                Monster _ action ->
+                    case action of
+                        Moving ->
+                            { old | stepsToHero = Just steps }
+
+                        Attacking ->
+                            old
 
                 Obstacle _ ->
                     old
@@ -112,4 +117,4 @@ setStepsIfEmptyOrMonster steps =
 
 updateGridCellDict : Coordinate -> (Maybe Cell -> Maybe Cell) -> Dict String Cell -> Dict String Cell
 updateGridCellDict roomCoordinate function gridCellDict =
-    Dict.update (makePlayFieldDictKeyFromCoordinate roomCoordinate) function gridCellDict
+    Dict.update (makeDictKeyFromCoordinate roomCoordinate) function gridCellDict

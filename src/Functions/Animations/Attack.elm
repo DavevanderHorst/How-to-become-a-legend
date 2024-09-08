@@ -47,7 +47,7 @@ makeMonsterAttackAnimationSvgs : Cell -> Specie -> Cell -> List (Svg Msg)
 makeMonsterAttackAnimationSvgs monsterCell specie heroCell =
     -- AttackAnimation is using coordinates, but we are using the screen positions here.
     let
-        heroAttackAnimation =
+        monsterAttackAnimation =
             makeMonsterAttackAnimation monsterCell specie heroCell
 
         damage =
@@ -56,7 +56,7 @@ makeMonsterAttackAnimationSvgs monsterCell specie heroCell =
         damageAnimation =
             makeDamageSvgAnimation heroCell damage heroAttackAnimationDuration
     in
-    [ heroAttackAnimation, damageAnimation ]
+    [ monsterAttackAnimation, damageAnimation ]
 
 
 makeMonsterAttackAnimation : Cell -> Specie -> Cell -> Svg Msg
@@ -72,7 +72,7 @@ makeHeroAttackAnimationSvgs heroCell attackedCell damage =
             makeHeroAttackAnimation heroCell attackedCell
 
         damageAnimation =
-            makeDamageSvgAnimation heroCell damage heroAttackAnimationDuration
+            makeDamageSvgAnimation attackedCell damage heroAttackAnimationDuration
     in
     [ heroAttackAnimation, damageAnimation ]
 
