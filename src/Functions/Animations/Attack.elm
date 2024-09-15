@@ -2,7 +2,7 @@ module Functions.Animations.Attack exposing (..)
 
 import Constants.FieldSizes exposing (halfSquareSize)
 import Constants.Monster exposing (getDamageForSpecie)
-import Constants.Times exposing (halfHeroAttackAnimationDuration, halfMonsterAnimationDuration, heroAttackAnimationDuration)
+import Constants.Times exposing (halfHeroAttackAnimationDuration, halfMonsterAnimationDuration, heroAttackAnimationDuration, monsterAnimationDuration)
 import Dict exposing (Dict)
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
 import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
@@ -54,7 +54,7 @@ makeMonsterAttackAnimationSvgs monsterCell specie heroCell =
             getDamageForSpecie specie
 
         damageAnimation =
-            makeDamageSvgAnimation heroCell damage heroAttackAnimationDuration
+            makeDamageSvgAnimation heroCell damage monsterAnimationDuration
     in
     [ monsterAttackAnimation, damageAnimation ]
 

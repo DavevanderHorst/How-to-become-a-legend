@@ -119,10 +119,13 @@ update msg model =
                         ( { updatedModel | playerInput = Possible }, Cmd.none )
 
                     else
-                        handleMonsterTurn restOfMonstersForAnimation updatedModel
+                        ( updatedModel, Process.sleep waitTimeBetweenAnimations |> Task.perform (always (DoNextMonster restOfMonstersForAnimation)) )
 
                 Err err ->
                     ( { model | error = Just err }, Cmd.none )
+
+        DoNextMonster restOfMonstersForAnimation ->
+            handleMonsterTurn restOfMonstersForAnimation model
 
         HeroAttacks attackedCell damage ->
             handleHeroAttack model attackedCell damage

@@ -13,5 +13,6 @@ type Msg
     | HandleKeyPressed PressedKey
     | HeroAnimationIsDone
     | MonsterAnimationIsDone MonsterModel (List MonsterModel)
+    | DoNextMonster (List MonsterModel)
     | HeroAttacks Cell Int
     | MonstersTurn

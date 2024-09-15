@@ -4,12 +4,8 @@ rogue like game
 Next programming steps.
 
 Make monster turn after hero moved.    
-    -- hero attack damage is in wrong place
-    -- monsters that are attacking , block there position since they don't move
-    -- monsters have settled damage for now and always move towards hero or attack when next to it       
-
-when a monster is attacking its spot can't be entered by other monsters.
-test by setting monster in a hallway with hero before, what will monster do then...
+    -- monster without a path, so blocked by other monster for example, don't move. make confused animation    
+    -- 2 moving monsters can move into each other. Fix this.
 
 Give hero and monster hit-points. Damage removes hit-points.
 Make a monster death animation.
