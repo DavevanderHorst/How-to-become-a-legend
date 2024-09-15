@@ -47,7 +47,7 @@ tryMakeMonsterMoveAnimationAndUpdateModel : MonsterModel -> Dict String Cell -> 
 tryMakeMonsterMoveAnimationAndUpdateModel monster playField =
     let
         moveToCoordinateResult =
-            tryFindCoordinateWithOneLowerStepAroundCoordinate monster.coordinate playField
+            tryFindCoordinateWithOneLowerStepAroundCoordinate monster.coordinate playField Nothing
     in
     case moveToCoordinateResult of
         Err error ->
@@ -72,6 +72,54 @@ tryMakeMonsterMoveAnimationAndUpdateModel monster playField =
                     let
                         moveToCellResult =
                             tryGetCellFromPlayFieldByCoordinate coordinateToMoveTo playField
+                    in
+                    case moveToCellResult of
+                        Err error ->
+                            Err
+                                { method = "tryMakeMonsterMoveAnimationAndUpdateModel(move towards cell) - " ++ error.method
+                                , error = error.error
+                                }
+
+                        Ok moveToCell ->
+                            let
+                                updatedMonsterModel =
+                                    { monster | coordinate = coordinateToMoveTo }
+
+                                moveAnimation =
+                                    makeMoveAnimationSvg (renderMonsterCell monster.specie baseCellAttributes) monsterAnimationDuration monsterCell moveToCell
+                            in
+                            Ok ( moveAnimation, updatedMonsterModel )
+
+
+tryMakeMonsterMoveAnimationForOtherSmallestCoordinate : MonsterModel -> Coordinate -> Dict String Cell -> Result Error ( Svg Msg, MonsterModel )
+tryMakeMonsterMoveAnimationForOtherSmallestCoordinate monster wrongCoordinate field =
+    let
+        moveToCoordinateResult =
+            tryFindCoordinateWithOneLowerStepAroundCoordinate monster.coordinate field (Just wrongCoordinate)
+    in
+    case moveToCoordinateResult of
+        Err error ->
+            Err
+                { method = "tryMakeMonsterMoveAnimationAndUpdateModel - " ++ error.method
+                , error = error.error
+                }
+
+        Ok coordinateToMoveTo ->
+            let
+                monsterCellResult =
+                    tryGetCellFromPlayFieldByCoordinate monster.coordinate field
+            in
+            case monsterCellResult of
+                Err error ->
+                    Err
+                        { method = "tryMakeMonsterMoveAnimationAndUpdateModel(monster cell) - " ++ error.method
+                        , error = error.error
+                        }
+
+                Ok monsterCell ->
+                    let
+                        moveToCellResult =
+                            tryGetCellFromPlayFieldByCoordinate coordinateToMoveTo field
                     in
                     case moveToCellResult of
                         Err error ->

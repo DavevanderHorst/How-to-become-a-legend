@@ -3,8 +3,11 @@ module Functions.Monsters.Base exposing (..)
 import Constants.Times exposing (monsterAnimationDuration)
 import Dict exposing (Dict)
 import Functions.Animations.Base exposing (tryMakeMonsterAnimationAndAdjustModel)
-import Functions.Coordinate exposing (areCoordinatesNextToEachOther)
+import Functions.Animations.Move exposing (tryMakeMonsterMoveAnimationForOtherSmallestCoordinate)
+import Functions.Base exposing (addToTheBackOfTheList)
+import Functions.Coordinate exposing (areCoordinatesNextToEachOther, isSameCoordinate)
 import Functions.Monsters.MonsterDict exposing (addMonsterToMonsterDictUnsafe)
+import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
 import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict, updateMonsterInPlayFieldUnsafe)
 import Functions.PlayField.Set exposing (removeMonsterFromPlayFieldUnsafe)
 import Messages exposing (Msg(..))
@@ -73,24 +76,109 @@ handleMonsterTurn monstersToDoList model =
                     ( { model | error = Just err }, Cmd.none )
 
                 Ok ( animations, newMonsterModel ) ->
-                    let
-                        fieldWithRemovedMonster =
-                            removeMonsterFromPlayFieldUnsafe firstMonster oldPlayField.field
+                    if isCoordinateInMonsterList newMonsterModel.coordinate tailOfMonsterList then
+                        -- there is still a monster on this spot, so that monster has to move first.
+                        -- we add this monster to the back of the list
+                        let
+                            changedMonsterList =
+                                addToTheBackOfTheList firstMonster tailOfMonsterList
+                        in
+                        ( model, Task.perform (\_ -> DoNextMonster changedMonsterList) (Task.succeed True) )
 
-                        updatedPlayField =
-                            { oldPlayField | field = fieldWithRemovedMonster }
+                    else if coordinateContainsAMonster newMonsterModel.coordinate model.level.playField.field && newMonsterModel.action == Moving then
+                        let
+                            otherCoordinateAnimationResult =
+                                tryMakeMonsterMoveAnimationForOtherSmallestCoordinate firstMonster newMonsterModel.coordinate model.level.playField.field
+                        in
+                        case otherCoordinateAnimationResult of
+                            -- we make from our monster dict a list
+                            -- then we take the first monster
+                            -- we make an
+                            Err err ->
+                                ( { model | error = Just err }, Cmd.none )
 
-                        updatedMonsters =
-                            insertMonsterInToMonsterDict newMonsterModel oldLevel.monsterModels
+                            Ok ( animation, newMonsterModelTwo ) ->
+                                let
+                                    fieldWithRemovedMonster =
+                                        removeMonsterFromPlayFieldUnsafe firstMonster oldPlayField.field
 
-                        updatedLevel =
-                            { oldLevel | animations = animations, playField = updatedPlayField, monsterModels = updatedMonsters }
+                                    updatedPlayField =
+                                        { oldPlayField | field = fieldWithRemovedMonster }
 
-                        nextCommand =
-                            Process.sleep (toFloat <| monsterAnimationDuration)
-                                |> Task.perform (always (MonsterAnimationIsDone newMonsterModel tailOfMonsterList))
-                    in
-                    ( { model | level = updatedLevel }, nextCommand )
+                                    updatedMonsters =
+                                        insertMonsterInToMonsterDict newMonsterModelTwo oldLevel.monsterModels
+
+                                    updatedLevel =
+                                        { oldLevel | animations = [ animation ], playField = updatedPlayField, monsterModels = updatedMonsters }
+
+                                    nextCommand =
+                                        Process.sleep (toFloat <| monsterAnimationDuration)
+                                            |> Task.perform (always (MonsterAnimationIsDone newMonsterModelTwo tailOfMonsterList))
+                                in
+                                ( { model | level = updatedLevel }, nextCommand )
+
+                    else
+                        let
+                            fieldWithRemovedMonster =
+                                removeMonsterFromPlayFieldUnsafe firstMonster oldPlayField.field
+
+                            updatedPlayField =
+                                { oldPlayField | field = fieldWithRemovedMonster }
+
+                            updatedMonsters =
+                                insertMonsterInToMonsterDict newMonsterModel oldLevel.monsterModels
+
+                            updatedLevel =
+                                { oldLevel | animations = animations, playField = updatedPlayField, monsterModels = updatedMonsters }
+
+                            nextCommand =
+                                Process.sleep (toFloat <| monsterAnimationDuration)
+                                    |> Task.perform (always (MonsterAnimationIsDone newMonsterModel tailOfMonsterList))
+                        in
+                        ( { model | level = updatedLevel }, nextCommand )
+
+
+coordinateContainsAMonster : Coordinate -> Dict String Cell -> Bool
+coordinateContainsAMonster coordinate field =
+    let
+        getCellResult =
+            tryGetCellFromPlayFieldByCoordinate coordinate field
+    in
+    case getCellResult of
+        Err _ ->
+            False
+
+        Ok cell ->
+            case cell.content of
+                Types.Empty ->
+                    False
+
+                Types.Hero ->
+                    False
+
+                Types.Monster _ _ ->
+                    True
+
+                Types.Obstacle _ ->
+                    False
+
+
+isCoordinateInMonsterList : Coordinate -> List MonsterModel -> Bool
+isCoordinateInMonsterList coordinate monsters =
+    let
+        filteredList =
+            List.filter (monsterHasSameCoordinate coordinate) monsters
+    in
+    if List.length filteredList > 0 then
+        True
+
+    else
+        False
+
+
+monsterHasSameCoordinate : Coordinate -> MonsterModel -> Bool
+monsterHasSameCoordinate coordinate monster =
+    isSameCoordinate coordinate monster.coordinate
 
 
 setMonsterActions : Level -> Level

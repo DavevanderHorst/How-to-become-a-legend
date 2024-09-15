@@ -48,6 +48,15 @@ isNotSameCoordinate a b =
         True
 
 
+isSameCoordinate : Coordinate -> Coordinate -> Bool
+isSameCoordinate a b =
+    if a.rowNumber == b.rowNumber && a.columnNumber == b.columnNumber then
+        True
+
+    else
+        False
+
+
 areCoordinatesNextToEachOther : Coordinate -> Coordinate -> Bool
 areCoordinatesNextToEachOther coordinateOne coordinateTwo =
     if coordinateOne.columnNumber == coordinateTwo.columnNumber then

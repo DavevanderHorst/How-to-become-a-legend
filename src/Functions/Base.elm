@@ -11,3 +11,15 @@ differenceBetweenNumbers numberOne numberTwo =
             min numberOne numberTwo
     in
     biggestNumber - smallestNumber
+
+
+addToTheBackOfTheList : a -> List a -> List a
+addToTheBackOfTheList a list =
+    let
+        reversedList =
+            List.reverse list
+
+        addedList =
+            a :: reversedList
+    in
+    List.reverse addedList

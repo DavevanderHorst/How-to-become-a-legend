@@ -1,7 +1,7 @@
 module Functions.PathFinding exposing (setPathFindingInPlayField, tryFindCoordinateWithOneLowerStepAroundCoordinate)
 
 import Dict exposing (Dict)
-import Functions.Coordinate exposing (getNextCoordinateForDirection)
+import Functions.Coordinate exposing (getNextCoordinateForDirection, isSameCoordinate)
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
 import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInPlayField, tryGetCellFromPlayFieldByCoordinate)
 import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
@@ -411,7 +411,7 @@ findLowestStepsAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Int
 findLowestStepsAroundCoordinate coordinate playField =
     let
         maybeLowestStepsWithCoordinate =
-            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
+            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate Nothing findLowestStepsAroundCoordinateStartDirection Nothing playField
     in
     case maybeLowestStepsWithCoordinate of
         Nothing ->
@@ -421,11 +421,11 @@ findLowestStepsAroundCoordinate coordinate playField =
             Just lowestSteps
 
 
-tryFindCoordinateWithOneLowerStepAroundCoordinate : Coordinate -> Dict String Cell -> Result Error Coordinate
-tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate playField =
+tryFindCoordinateWithOneLowerStepAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Coordinate -> Result Error Coordinate
+tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate playField maybeCoordinate =
     let
         maybeLowestStepsWithCoordinate =
-            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
+            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeCoordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
     in
     case maybeLowestStepsWithCoordinate of
         Nothing ->
@@ -462,41 +462,64 @@ tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate playField =
                             }
 
 
-findLowestStepsWithCoordinateAroundCoordinateFunction : Coordinate -> Direction -> Maybe ( Int, Coordinate ) -> Dict String Cell -> Maybe ( Int, Coordinate )
-findLowestStepsWithCoordinateAroundCoordinateFunction coordinate currentDirection maybeStepsWithCoordinate playField =
+findLowestStepsWithCoordinateAroundCoordinateFunction : Coordinate -> Maybe Coordinate -> Direction -> Maybe ( Int, Coordinate ) -> Dict String Cell -> Maybe ( Int, Coordinate )
+findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeWrongCoordinate currentDirection maybeStepsWithCoordinate playField =
     let
         coordinateToCheck =
             getNextCoordinateForDirection currentDirection coordinate
-
-        checkedMaybeSteps =
-            getMaybeStepsForCoordinateInPlayField coordinateToCheck playField
-
-        updatedMaybeStepsWithCoordinate =
-            case checkedMaybeSteps of
-                Nothing ->
-                    maybeStepsWithCoordinate
-
-                Just newSteps ->
-                    case maybeStepsWithCoordinate of
-                        Nothing ->
-                            Just ( newSteps, coordinateToCheck )
-
-                        Just ( oldSteps, _ ) ->
-                            if oldSteps > newSteps then
-                                Just ( newSteps, coordinateToCheck )
-
-                            else
-                                maybeStepsWithCoordinate
     in
-    if currentDirection == findLowestStepsAroundCoordinateEndDirection then
-        updatedMaybeStepsWithCoordinate
+    if maybeCoordinateIsSameAsCoordinate coordinateToCheck maybeWrongCoordinate then
+        if currentDirection == findLowestStepsAroundCoordinateEndDirection then
+            maybeStepsWithCoordinate
+
+        else
+            let
+                nextDirection =
+                    findNextDirectionForGoingAroundUnSafe currentDirection
+            in
+            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeWrongCoordinate nextDirection maybeStepsWithCoordinate playField
 
     else
         let
-            nextDirection =
-                findNextDirectionForGoingAroundUnSafe currentDirection
+            checkedMaybeSteps =
+                getMaybeStepsForCoordinateInPlayField coordinateToCheck playField
+
+            updatedMaybeStepsWithCoordinate =
+                case checkedMaybeSteps of
+                    Nothing ->
+                        maybeStepsWithCoordinate
+
+                    Just newSteps ->
+                        case maybeStepsWithCoordinate of
+                            Nothing ->
+                                Just ( newSteps, coordinateToCheck )
+
+                            Just ( oldSteps, _ ) ->
+                                if oldSteps > newSteps then
+                                    Just ( newSteps, coordinateToCheck )
+
+                                else
+                                    maybeStepsWithCoordinate
         in
-        findLowestStepsWithCoordinateAroundCoordinateFunction coordinate nextDirection updatedMaybeStepsWithCoordinate playField
+        if currentDirection == findLowestStepsAroundCoordinateEndDirection then
+            updatedMaybeStepsWithCoordinate
+
+        else
+            let
+                nextDirection =
+                    findNextDirectionForGoingAroundUnSafe currentDirection
+            in
+            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeWrongCoordinate nextDirection updatedMaybeStepsWithCoordinate playField
+
+
+maybeCoordinateIsSameAsCoordinate : Coordinate -> Maybe Coordinate -> Bool
+maybeCoordinateIsSameAsCoordinate coordinate maybeCoordinate =
+    case maybeCoordinate of
+        Nothing ->
+            False
+
+        Just otherCoordinate ->
+            isSameCoordinate coordinate otherCoordinate
 
 
 

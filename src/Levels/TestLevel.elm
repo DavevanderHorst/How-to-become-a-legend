@@ -26,24 +26,23 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 2 2 }
+    { coordinate = Coordinate 1 6 }
 
 
 monsterList : List MonsterModel
 monsterList =
-    [ { coordinate = Coordinate 2 3
+    [ { coordinate = Coordinate 2 4
       , specie = Dummy
       , action = Moving
       }
-    , { coordinate = Coordinate 2 5
+    , { coordinate = Coordinate 3 5
       , specie = Dummy
       , action = Moving
       }
-
-    --, { coordinate = Coordinate 3 3
-    --  , specie = Dummy
-    --  , action = Moving
-    --  }
+    , { coordinate = Coordinate 1 3
+      , specie = Dummy
+      , action = Moving
+      }
     ]
 
 
