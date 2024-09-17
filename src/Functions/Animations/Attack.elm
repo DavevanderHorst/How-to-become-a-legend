@@ -5,7 +5,7 @@ import Constants.Monster exposing (getDamageForSpecie)
 import Constants.Times exposing (halfHeroAttackAnimationDuration, halfMonsterAnimationDuration, heroAttackAnimationDuration, monsterAnimationDuration)
 import Dict exposing (Dict)
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
+import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
 import Functions.ToString exposing (coordinateToString)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
@@ -23,7 +23,7 @@ tryMakeMonsterAttackAnimation : Cell -> Specie -> Coordinate -> Dict String Cell
 tryMakeMonsterAttackAnimation monsterCell specie heroSpot playField =
     let
         heroCellResult =
-            tryGetCellFromPlayFieldByCoordinate heroSpot playField
+            tryGetCellFromFieldByCoordinate heroSpot playField
     in
     case heroCellResult of
         Err error ->

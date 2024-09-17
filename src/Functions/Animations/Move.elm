@@ -1,19 +1,25 @@
 module Functions.Animations.Move exposing (..)
 
 import Constants.Times exposing (heroMoveAnimationDuration, monsterAnimationDuration)
-import Dict exposing (Dict)
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
-import Functions.PathFinding exposing (tryFindCoordinateWithOneLowerStepAroundCoordinate)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
-import Models.MainModel exposing (Error)
-import Models.Monster exposing (MonsterModel)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Svg)
+import Types exposing (Specie)
 import Views.Attributes exposing (baseCellAttributes)
 import Views.MainView exposing (renderHeroCell, renderMonsterCell)
+
+
+makeHeroMoveAnimationSvg : Cell -> Cell -> Svg Msg
+makeHeroMoveAnimationSvg heroCell nextCell =
+    makeMoveAnimationSvg (renderHeroCell baseCellAttributes) heroMoveAnimationDuration heroCell nextCell
+
+
+makeMonsterMoveAnimationUnsafe : Specie -> Cell -> Cell -> Svg Msg
+makeMonsterMoveAnimationUnsafe specie monsterCell moveToCell =
+    makeMoveAnimationSvg (renderMonsterCell specie baseCellAttributes) monsterAnimationDuration monsterCell moveToCell
 
 
 makeMoveAnimationSvg : Svg Msg -> Int -> Cell -> Cell -> Svg Msg
@@ -36,104 +42,3 @@ makeMoveAnimation start end duration =
         , options = []
         }
         [ makeAnimationStep end duration ]
-
-
-makeHeroMoveAnimationSvg : Cell -> Cell -> Svg Msg
-makeHeroMoveAnimationSvg heroCell nextCell =
-    makeMoveAnimationSvg (renderHeroCell baseCellAttributes) heroMoveAnimationDuration heroCell nextCell
-
-
-tryMakeMonsterMoveAnimationAndUpdateModel : MonsterModel -> Dict String Cell -> Result Error ( Svg Msg, MonsterModel )
-tryMakeMonsterMoveAnimationAndUpdateModel monster playField =
-    let
-        moveToCoordinateResult =
-            tryFindCoordinateWithOneLowerStepAroundCoordinate monster.coordinate playField Nothing
-    in
-    case moveToCoordinateResult of
-        Err error ->
-            Err
-                { method = "tryMakeMonsterMoveAnimationAndUpdateModel - " ++ error.method
-                , error = error.error
-                }
-
-        Ok coordinateToMoveTo ->
-            let
-                monsterCellResult =
-                    tryGetCellFromPlayFieldByCoordinate monster.coordinate playField
-            in
-            case monsterCellResult of
-                Err error ->
-                    Err
-                        { method = "tryMakeMonsterMoveAnimationAndUpdateModel(monster cell) - " ++ error.method
-                        , error = error.error
-                        }
-
-                Ok monsterCell ->
-                    let
-                        moveToCellResult =
-                            tryGetCellFromPlayFieldByCoordinate coordinateToMoveTo playField
-                    in
-                    case moveToCellResult of
-                        Err error ->
-                            Err
-                                { method = "tryMakeMonsterMoveAnimationAndUpdateModel(move towards cell) - " ++ error.method
-                                , error = error.error
-                                }
-
-                        Ok moveToCell ->
-                            let
-                                updatedMonsterModel =
-                                    { monster | coordinate = coordinateToMoveTo }
-
-                                moveAnimation =
-                                    makeMoveAnimationSvg (renderMonsterCell monster.specie baseCellAttributes) monsterAnimationDuration monsterCell moveToCell
-                            in
-                            Ok ( moveAnimation, updatedMonsterModel )
-
-
-tryMakeMonsterMoveAnimationForOtherSmallestCoordinate : MonsterModel -> Coordinate -> Dict String Cell -> Result Error ( Svg Msg, MonsterModel )
-tryMakeMonsterMoveAnimationForOtherSmallestCoordinate monster wrongCoordinate field =
-    let
-        moveToCoordinateResult =
-            tryFindCoordinateWithOneLowerStepAroundCoordinate monster.coordinate field (Just wrongCoordinate)
-    in
-    case moveToCoordinateResult of
-        Err error ->
-            Err
-                { method = "tryMakeMonsterMoveAnimationAndUpdateModel - " ++ error.method
-                , error = error.error
-                }
-
-        Ok coordinateToMoveTo ->
-            let
-                monsterCellResult =
-                    tryGetCellFromPlayFieldByCoordinate monster.coordinate field
-            in
-            case monsterCellResult of
-                Err error ->
-                    Err
-                        { method = "tryMakeMonsterMoveAnimationAndUpdateModel(monster cell) - " ++ error.method
-                        , error = error.error
-                        }
-
-                Ok monsterCell ->
-                    let
-                        moveToCellResult =
-                            tryGetCellFromPlayFieldByCoordinate coordinateToMoveTo field
-                    in
-                    case moveToCellResult of
-                        Err error ->
-                            Err
-                                { method = "tryMakeMonsterMoveAnimationAndUpdateModel(move towards cell) - " ++ error.method
-                                , error = error.error
-                                }
-
-                        Ok moveToCell ->
-                            let
-                                updatedMonsterModel =
-                                    { monster | coordinate = coordinateToMoveTo }
-
-                                moveAnimation =
-                                    makeMoveAnimationSvg (renderMonsterCell monster.specie baseCellAttributes) monsterAnimationDuration monsterCell moveToCell
-                            in
-                            Ok ( moveAnimation, updatedMonsterModel )

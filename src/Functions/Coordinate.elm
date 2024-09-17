@@ -5,6 +5,11 @@ import Models.Cell exposing (Coordinate)
 import Types exposing (Direction(..))
 
 
+emptyCoordinate : Coordinate
+emptyCoordinate =
+    Coordinate 0 0
+
+
 getNextCoordinateForDirection : Direction -> Coordinate -> Coordinate
 getNextCoordinateForDirection direction coordinate =
     case direction of

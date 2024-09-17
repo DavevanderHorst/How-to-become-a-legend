@@ -6,8 +6,8 @@ import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (Error)
 
 
-tryGetCellFromPlayFieldByKey : String -> Dict String Cell -> Result Error Cell
-tryGetCellFromPlayFieldByKey key playField =
+tryGetCellFromFieldByKey : String -> Dict String Cell -> Result Error Cell
+tryGetCellFromFieldByKey key playField =
     let
         maybeCell =
             Dict.get key playField
@@ -23,23 +23,23 @@ tryGetCellFromPlayFieldByKey key playField =
             Ok cell
 
 
-tryGetCellFromPlayFieldByCoordinate : Coordinate -> Dict String Cell -> Result Error Cell
-tryGetCellFromPlayFieldByCoordinate coordinate playField =
+tryGetCellFromFieldByCoordinate : Coordinate -> Dict String Cell -> Result Error Cell
+tryGetCellFromFieldByCoordinate coordinate playField =
     let
         key =
             makeDictKeyFromCoordinate coordinate
     in
-    tryGetCellFromPlayFieldByKey key playField
+    tryGetCellFromFieldByKey key playField
 
 
-getMaybeStepsForCoordinateInPlayField : Coordinate -> Dict String Cell -> Maybe Int
-getMaybeStepsForCoordinateInPlayField coordinate playField =
+getMaybeStepsForCoordinateInField : Coordinate -> Dict String Cell -> Maybe Int
+getMaybeStepsForCoordinateInField coordinate playField =
     let
         key =
             makeDictKeyFromCoordinate coordinate
 
         getCellResult =
-            tryGetCellFromPlayFieldByKey key playField
+            tryGetCellFromFieldByKey key playField
     in
     case getCellResult of
         Err _ ->

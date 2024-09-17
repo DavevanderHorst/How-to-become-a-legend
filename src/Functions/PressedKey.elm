@@ -5,7 +5,7 @@ import Constants.Times exposing (heroMoveAnimationDuration)
 import Functions.Animations.Move exposing (makeHeroMoveAnimationSvg)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
+import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
 import Functions.PlayField.Set exposing (removeStepsFromPlayField)
 import Functions.Random exposing (rollHeroDamage)
 import Functions.ToString exposing (coordinateToString)
@@ -66,7 +66,7 @@ handlePressedArrowDirection direction model =
             getNextCoordinateForDirection direction model.level.heroModel.coordinate
 
         nextCellResult =
-            tryGetCellFromPlayFieldByCoordinate nextCoordinate model.level.playField.field
+            tryGetCellFromFieldByCoordinate nextCoordinate model.level.playField.field
     in
     case nextCellResult of
         Err _ ->
@@ -94,7 +94,7 @@ handlePressedArrowDirection direction model =
                     -- set move animation, for this we also need the current hero cell.
                     let
                         currentHeroCellResult =
-                            tryGetCellFromPlayFieldByCoordinate updatedLevel.heroModel.coordinate updatedLevel.playField.field
+                            tryGetCellFromFieldByCoordinate updatedLevel.heroModel.coordinate updatedLevel.playField.field
                     in
                     case currentHeroCellResult of
                         -- we remove hero from play field, and set the new coordinate as hero coordinate

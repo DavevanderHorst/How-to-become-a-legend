@@ -1,7 +1,7 @@
 module Functions.PlayField.Set exposing (..)
 
 import Dict exposing (Dict)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByCoordinate)
+import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
 import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Functions.ToString exposing (cellContentToString)
 import Models.Cell exposing (Cell, Coordinate)
@@ -27,7 +27,7 @@ trySetMonsterInPlayField : MonsterModel -> Dict String Cell -> Result Error (Dic
 trySetMonsterInPlayField monster playField =
     let
         monsterCellResult =
-            tryGetCellFromPlayFieldByCoordinate monster.coordinate playField
+            tryGetCellFromFieldByCoordinate monster.coordinate playField
     in
     case monsterCellResult of
         Err err ->

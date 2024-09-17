@@ -1,9 +1,9 @@
-module Functions.PathFinding exposing (setPathFindingInPlayField, tryFindCoordinateWithOneLowerStepAroundCoordinate)
+module Functions.PathFinding exposing (..)
 
 import Dict exposing (Dict)
-import Functions.Coordinate exposing (getNextCoordinateForDirection, isSameCoordinate)
+import Functions.Coordinate exposing (emptyCoordinate, getNextCoordinateForDirection, isSameCoordinate)
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
-import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInPlayField, tryGetCellFromPlayFieldByCoordinate)
+import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInField, tryGetCellFromFieldByCoordinate)
 import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (PlayField)
@@ -131,7 +131,7 @@ checkCoordinateForStepChanges coordinate ( playField, hasChanged ) =
             findLowestStepsAroundCoordinate coordinate playField
 
         maybeCurrentSteps =
-            getMaybeStepsForCoordinateInPlayField coordinate playField
+            getMaybeStepsForCoordinateInField coordinate playField
     in
     case maybeNewLowestStepAround of
         -- notting found, only possible if it always was like this.
@@ -202,7 +202,7 @@ checkLeftOverCoordinate isFirstRound coordinate ( playField, isChanged ) =
             else
                 let
                     currentCoordinateSteps =
-                        getMaybeStepsForCoordinateInPlayField coordinate playField
+                        getMaybeStepsForCoordinateInField coordinate playField
                 in
                 case currentCoordinateSteps of
                     Nothing ->
@@ -272,7 +272,7 @@ addCoordinatesToCoordinatesToDoList diff direction currentCoordinate coordinates
     else
         let
             getCellResult =
-                tryGetCellFromPlayFieldByCoordinate currentCoordinate playField
+                tryGetCellFromFieldByCoordinate currentCoordinate playField
         in
         case getCellResult of
             Err _ ->
@@ -330,7 +330,7 @@ goRightAroundAndFindLowestSteps :
 goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundCoordinatesList monsterDict =
     let
         currentCellResult =
-            tryGetCellFromPlayFieldByCoordinate currentCoordinate playField
+            tryGetCellFromFieldByCoordinate currentCoordinate playField
 
         ( updatedFoundCoordinatesList, updatedPlayField ) =
             case currentCellResult of
@@ -421,8 +421,53 @@ findLowestStepsAroundCoordinate coordinate playField =
             Just lowestSteps
 
 
-tryFindCoordinateWithOneLowerStepAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Coordinate -> Result Error Coordinate
-tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate playField maybeCoordinate =
+tryFindCoordinateWithOneLowerStepAroundCoordinate : Coordinate -> Int -> Dict String Cell -> ( Bool, Coordinate )
+tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate steps field =
+    -- TODO we can make a list with directions, take the first, remove it from list and put in back again., and make that the one to check first.
+    -- this can change the way monsters move.
+    let
+        startDirection =
+            Up
+    in
+    tryFindCoordinateWithStepsAroundCoordinate coordinate (steps - 1) field startDirection startDirection True
+
+
+tryFindCoordinateWithStepsAroundCoordinate : Coordinate -> Int -> Dict String Cell -> Direction -> Direction -> Bool -> ( Bool, Coordinate )
+tryFindCoordinateWithStepsAroundCoordinate coordinate steps field currentDirection endDirection isStart =
+    if currentDirection == endDirection && not isStart then
+        ( False, emptyCoordinate )
+
+    else
+        let
+            coordinateToCheck =
+                getNextCoordinateForDirection currentDirection coordinate
+        in
+        let
+            checkedMaybeSteps =
+                getMaybeStepsForCoordinateInField coordinateToCheck field
+        in
+        case checkedMaybeSteps of
+            Nothing ->
+                let
+                    nextDirection =
+                        findNextDirectionForGoingAroundUnSafe currentDirection
+                in
+                tryFindCoordinateWithStepsAroundCoordinate coordinate steps field nextDirection endDirection False
+
+            Just foundSteps ->
+                if foundSteps == steps then
+                    ( True, coordinateToCheck )
+
+                else
+                    let
+                        nextDirection =
+                            findNextDirectionForGoingAroundUnSafe currentDirection
+                    in
+                    tryFindCoordinateWithStepsAroundCoordinate coordinate steps field nextDirection endDirection False
+
+
+tryFindCoordinateWithLowestStepAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Coordinate -> Result Error Coordinate
+tryFindCoordinateWithLowestStepAroundCoordinate coordinate playField maybeCoordinate =
     let
         maybeLowestStepsWithCoordinate =
             findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeCoordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
@@ -437,7 +482,7 @@ tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate playField maybeCoor
         Just ( foundSteps, foundCoordinate ) ->
             let
                 maybeStepsOnCurrentCoordinate =
-                    getMaybeStepsForCoordinateInPlayField coordinate playField
+                    getMaybeStepsForCoordinateInField coordinate playField
             in
             case maybeStepsOnCurrentCoordinate of
                 Nothing ->
@@ -482,7 +527,7 @@ findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeWrongCoord
     else
         let
             checkedMaybeSteps =
-                getMaybeStepsForCoordinateInPlayField coordinateToCheck playField
+                getMaybeStepsForCoordinateInField coordinateToCheck playField
 
             updatedMaybeStepsWithCoordinate =
                 case checkedMaybeSteps of

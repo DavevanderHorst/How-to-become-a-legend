@@ -3,7 +3,7 @@ module Functions.Hero.Attack exposing (..)
 import Constants.Sounds exposing (heroAttackSound)
 import Constants.Times exposing (heroAttackAnimationDuration)
 import Functions.Animations.Attack exposing (makeHeroAttackAnimationSvgs)
-import Functions.PlayField.Get exposing (tryGetCellFromPlayFieldByKey)
+import Functions.PlayField.Get exposing (tryGetCellFromFieldByKey)
 import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Cell)
@@ -21,7 +21,7 @@ handleHeroAttack model attackedCell damage =
             model.level
 
         currentHeroCellResult =
-            tryGetCellFromPlayFieldByKey (makeDictKeyFromCoordinate level.heroModel.coordinate) level.playField.field
+            tryGetCellFromFieldByKey (makeDictKeyFromCoordinate level.heroModel.coordinate) level.playField.field
     in
     case currentHeroCellResult of
         Ok currentHeroCell ->
