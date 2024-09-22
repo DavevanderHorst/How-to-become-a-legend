@@ -1,163 +1,129 @@
 module Functions.Monsters.Moving exposing (handleMonsterMovingTurn)
 
-import Constants.Times exposing (monsterAnimationDuration)
+import Functions.Animations.Idle exposing (makeMonsterIdleAnimationUnsafe)
 import Functions.Animations.Move exposing (makeMonsterMoveAnimationUnsafe)
 import Functions.Base exposing (addToTheBackOfTheList)
 import Functions.Coordinate exposing (isSameCoordinate)
-import Functions.PathFinding exposing (tryFindCoordinateWithOneLowerStepAroundCoordinate)
+import Functions.Monsters.FinishMonsterTurn exposing (finishMonsterTurn)
+import Functions.PathFinding exposing (makeLowestStepWithCoordinateListFromAroundCoordinate)
 import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
-import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict)
-import Functions.PlayField.Set exposing (removeMonsterFromPlayFieldUnsafe)
 import Messages exposing (Msg(..))
-import Models.Cell exposing (Coordinate)
+import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (MainModel)
 import Models.Monster exposing (MonsterModel)
-import Process
 import Task
 import Types exposing (CellContent(..))
 
 
-handleMonsterMovingTurn : MonsterModel -> MainModel -> List MonsterModel -> ( MainModel, Cmd Msg )
-handleMonsterMovingTurn monster model restOfMonsters =
-    -- we check everything here
-    -- cell monster moves towards, cell hes in
-    let
-        field =
-            model.level.playField.field
-
-        monsterCellResult =
-            tryGetCellFromFieldByCoordinate monster.coordinate field
-    in
-    case monsterCellResult of
-        Err error ->
+handleMonsterMovingTurn : MonsterModel -> Cell -> MainModel -> List MonsterModel -> ( MainModel, Cmd Msg )
+handleMonsterMovingTurn monster monsterCell model restOfMonsters =
+    -- monster and monster cell are checked, we check everything else here
+    case monsterCell.stepsToHero of
+        Nothing ->
+            -- cell has no steps, so monster wont move! TODO
             let
                 updatedError =
-                    { method = "handleMonsterMovingTurn - " ++ error.method
-                    , error = error.error
+                    { method = "handleMonsterMovingTurn"
+                    , error = "TODO no steps, cant move animation"
                     }
             in
             ( { model | error = Just updatedError }, Cmd.none )
 
-        Ok monsterCell ->
+        Just steps ->
             let
-                ( monsterIsInCell, error ) =
-                    checkIfMonsterIsInCell monster monsterCell.content
-            in
-            if not monsterIsInCell then
-                let
-                    updatedError =
-                        { method = "handleMonsterMovingTurn"
-                        , error = error
-                        }
-                in
-                ( { model | error = Just updatedError }, Cmd.none )
+                field =
+                    model.level.playField.field
 
-            else
-                -- monster is oke, we check if his cell has any steps.
-                case monsterCell.stepsToHero of
-                    Nothing ->
-                        -- cell has no steps, so monster wont move! TODO
+                lowestStepsList =
+                    makeLowestStepWithCoordinateListFromAroundCoordinate monster.coordinate field
+            in
+            case List.head lowestStepsList of
+                Nothing ->
+                    let
+                        updatedError =
+                            { method = "handleMonsterMovingTurn"
+                            , error = "Our monster cell has steps, but we didnt find another cell around with steps."
+                            }
+                    in
+                    ( { model | error = Just updatedError }, Cmd.none )
+
+                Just lowestCoordinateWithStep ->
+                    if lowestCoordinateWithStep.steps + 1 /= steps then
                         let
                             updatedError =
                                 { method = "handleMonsterMovingTurn"
-                                , error = "TODO no steps, cant move animation"
+                                , error = "Found wrong steps, should be 1 lower."
                                 }
                         in
                         ( { model | error = Just updatedError }, Cmd.none )
 
-                    Just steps ->
+                    else if isCoordinateInMonsterList lowestCoordinateWithStep.coordinate restOfMonsters then
+                        -- there is still a monster on this spot, so that monster has to move first.
+                        -- we add this monster to the back of the list
                         let
-                            ( didWeFindCoordinate, foundCoordinate ) =
-                                tryFindCoordinateWithOneLowerStepAroundCoordinate monster.coordinate steps field
+                            changedMonsterList =
+                                addToTheBackOfTheList monster restOfMonsters
                         in
-                        if didWeFindCoordinate then
-                            if isCoordinateInMonsterList foundCoordinate restOfMonsters then
-                                -- there is still a monster on this spot, so that monster has to move first.
-                                -- we add this monster to the back of the list
-                                let
-                                    changedMonsterList =
-                                        addToTheBackOfTheList monster restOfMonsters
-                                in
-                                ( model, Task.perform (\_ -> DoNextMonster changedMonsterList) (Task.succeed True) )
+                        ( model, Task.perform (\_ -> DoNextMonster changedMonsterList) (Task.succeed True) )
 
-                            else
+                    else
+                        let
+                            foundCellResult =
+                                tryGetCellFromFieldByCoordinate lowestCoordinateWithStep.coordinate field
+                        in
+                        case foundCellResult of
+                            Err foundCellError ->
                                 let
-                                    foundCellResult =
-                                        tryGetCellFromFieldByCoordinate foundCoordinate field
+                                    updatedError =
+                                        { method = "handleMonsterMovingTurn - " ++ foundCellError.method
+                                        , error = foundCellError.error
+                                        }
                                 in
-                                case foundCellResult of
-                                    Err foundCellError ->
-                                        let
-                                            updatedError =
-                                                { method = "handleMonsterMovingTurn - " ++ foundCellError.method
-                                                , error = foundCellError.error
-                                                }
-                                        in
-                                        ( { model | error = Just updatedError }, Cmd.none )
+                                ( { model | error = Just updatedError }, Cmd.none )
 
-                                    Ok foundCell ->
+                            Ok foundCell ->
+                                -- we need to check if this cell is empty
+                                case foundCell.content of
+                                    Empty ->
+                                        -- everything is oke!
                                         let
                                             animation =
                                                 makeMonsterMoveAnimationUnsafe monster.specie monsterCell foundCell
 
-                                            fieldWithRemovedMonster =
-                                                removeMonsterFromPlayFieldUnsafe monster field
-
                                             updatedMonster =
-                                                { monster | coordinate = foundCoordinate }
-
-                                            oldLevel =
-                                                model.level
-
-                                            oldPlayField =
-                                                oldLevel.playField
-
-                                            updatedPlayField =
-                                                { oldPlayField | field = fieldWithRemovedMonster }
-
-                                            updatedMonsters =
-                                                insertMonsterInToMonsterDict updatedMonster oldLevel.monsterModels
-
-                                            updatedLevel =
-                                                { oldLevel | animations = [ animation ], playField = updatedPlayField, monsterModels = updatedMonsters }
-
-                                            nextCommand =
-                                                Process.sleep (toFloat <| monsterAnimationDuration)
-                                                    |> Task.perform (always (MonsterAnimationIsDone updatedMonster restOfMonsters))
+                                                { monster | coordinate = foundCell.coordinate }
                                         in
-                                        ( { model | level = updatedLevel }, nextCommand )
+                                        finishMonsterTurn monster (Just updatedMonster) [ animation ] model restOfMonsters
 
-                        else
-                            let
-                                updatedError =
-                                    { method = "handleMonsterMovingTurn"
-                                    , error = "found steps in coordinate, but did not find one lower step around it."
-                                    }
-                            in
-                            ( { model | error = Just updatedError }, Cmd.none )
+                                    Hero ->
+                                        -- not possible, else something is wrong with pathfinding.
+                                        let
+                                            updatedError =
+                                                { method = "handleMonsterMovingTurn"
+                                                , error = "The hero is in the cell where monster is moving towards."
+                                                }
+                                        in
+                                        ( { model | error = Just updatedError }, Cmd.none )
 
+                                    Monster _ _ ->
+                                        -- we found a monster on the spot our monster wants to move towards
+                                        -- that means that another monster already moved here this round.
+                                        -- so we dont move, but do a not moving animation
+                                        let
+                                            animation =
+                                                makeMonsterIdleAnimationUnsafe monster.specie monsterCell
+                                        in
+                                        finishMonsterTurn monster Nothing [ animation ] model restOfMonsters
 
-checkIfMonsterIsInCell : MonsterModel -> CellContent -> ( Bool, String )
-checkIfMonsterIsInCell monster content =
-    case content of
-        Empty ->
-            ( False, "Cell content is empty" )
-
-        Hero ->
-            ( False, "Cell content contains a hero" )
-
-        Monster specie action ->
-            if monster.specie /= specie then
-                ( False, "Monster in cell is different specie" )
-
-            else if monster.action /= action then
-                ( False, "Monster in cell has different action" )
-
-            else
-                ( True, "" )
-
-        Obstacle _ ->
-            ( False, "Cell content contains an obstacle" )
+                                    Obstacle _ ->
+                                        -- not possible, else something is wrong with pathfinding.
+                                        let
+                                            updatedError =
+                                                { method = "handleMonsterMovingTurn"
+                                                , error = "There is an obstacle in the cell where monster is moving towards."
+                                                }
+                                        in
+                                        ( { model | error = Just updatedError }, Cmd.none )
 
 
 isCoordinateInMonsterList : Coordinate -> List MonsterModel -> Bool

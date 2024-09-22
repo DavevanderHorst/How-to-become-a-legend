@@ -19,32 +19,8 @@ import Views.Attributes exposing (baseCellAttributes)
 import Views.MainView exposing (renderHeroCell, renderMonsterCell)
 
 
-tryMakeMonsterAttackAnimation : Cell -> Specie -> Coordinate -> Dict String Cell -> Result Error (List (Svg Msg))
-tryMakeMonsterAttackAnimation monsterCell specie heroSpot playField =
-    let
-        heroCellResult =
-            tryGetCellFromFieldByCoordinate heroSpot playField
-    in
-    case heroCellResult of
-        Err error ->
-            Err
-                { method = "tryMakeMonsterAttackAnimation - " ++ error.method
-                , error = error.error
-                }
-
-        Ok heroCell ->
-            if heroCell.content /= Hero then
-                Err
-                    { method = "tryMakeMonsterAttackAnimation"
-                    , error = "Hero is not on given coordinate : " ++ coordinateToString heroSpot
-                    }
-
-            else
-                Ok (makeMonsterAttackAnimationSvgs monsterCell specie heroCell)
-
-
-makeMonsterAttackAnimationSvgs : Cell -> Specie -> Cell -> List (Svg Msg)
-makeMonsterAttackAnimationSvgs monsterCell specie heroCell =
+makeMonsterAttackAnimationSvgsUnsafe : Cell -> Specie -> Cell -> List (Svg Msg)
+makeMonsterAttackAnimationSvgsUnsafe monsterCell specie heroCell =
     -- AttackAnimation is using coordinates, but we are using the screen positions here.
     let
         monsterAttackAnimation =

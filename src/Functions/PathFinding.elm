@@ -5,7 +5,7 @@ import Functions.Coordinate exposing (emptyCoordinate, getNextCoordinateForDirec
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
 import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInField, tryGetCellFromFieldByCoordinate)
 import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
-import Models.Cell exposing (Cell, Coordinate)
+import Models.Cell exposing (Cell, Coordinate, CoordinateWithStep)
 import Models.Level exposing (PlayField)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
@@ -421,15 +421,45 @@ findLowestStepsAroundCoordinate coordinate playField =
             Just lowestSteps
 
 
-tryFindCoordinateWithOneLowerStepAroundCoordinate : Coordinate -> Int -> Dict String Cell -> ( Bool, Coordinate )
-tryFindCoordinateWithOneLowerStepAroundCoordinate coordinate steps field =
+makeLowestStepWithCoordinateListFromAroundCoordinate : Coordinate -> Dict String Cell -> List CoordinateWithStep
+makeLowestStepWithCoordinateListFromAroundCoordinate coordinate field =
     -- TODO we can make a list with directions, take the first, remove it from list and put in back again., and make that the one to check first.
     -- this can change the way monsters move.
     let
         startDirection =
             Up
+
+        coordinateWithStepList =
+            setCoordinatesWithStepInListAroundCoordinate coordinate startDirection startDirection True field []
     in
-    tryFindCoordinateWithStepsAroundCoordinate coordinate (steps - 1) field startDirection startDirection True
+    List.sortBy .steps coordinateWithStepList
+
+
+setCoordinatesWithStepInListAroundCoordinate : Coordinate -> Direction -> Direction -> Bool -> Dict String Cell -> List CoordinateWithStep -> List CoordinateWithStep
+setCoordinatesWithStepInListAroundCoordinate coordinate currentDirection endDirection isStart field coordinateWithStepList =
+    if currentDirection == endDirection && not isStart then
+        coordinateWithStepList
+
+    else
+        let
+            coordinateToCheck =
+                getNextCoordinateForDirection currentDirection coordinate
+
+            checkedMaybeSteps =
+                getMaybeStepsForCoordinateInField coordinateToCheck field
+
+            updatedCoordinatesWithStepList =
+                case checkedMaybeSteps of
+                    Nothing ->
+                        coordinateWithStepList
+
+                    Just foundSteps ->
+                        CoordinateWithStep coordinateToCheck foundSteps :: coordinateWithStepList
+
+            nextDirection =
+                findNextDirectionForGoingAroundUnSafe currentDirection
+        in
+        setCoordinatesWithStepInListAroundCoordinate coordinate nextDirection endDirection False field updatedCoordinatesWithStepList
 
 
 tryFindCoordinateWithStepsAroundCoordinate : Coordinate -> Int -> Dict String Cell -> Direction -> Direction -> Bool -> ( Bool, Coordinate )
