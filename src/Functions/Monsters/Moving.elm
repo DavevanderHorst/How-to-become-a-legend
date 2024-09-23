@@ -2,7 +2,7 @@ module Functions.Monsters.Moving exposing (handleMonsterMovingTurn)
 
 import Functions.Animations.Idle exposing (makeMonsterIdleAnimationUnsafe)
 import Functions.Animations.Move exposing (makeMonsterMoveAnimationUnsafe)
-import Functions.Base exposing (addToTheBackOfTheList)
+import Functions.Base exposing (addToTheBackOfTheList, tryTakeSecondFromList)
 import Functions.Coordinate exposing (isSameCoordinate)
 import Functions.Monsters.FinishMonsterTurn exposing (finishMonsterTurn)
 import Functions.PathFinding exposing (makeLowestStepWithCoordinateListFromAroundCoordinate)
@@ -86,14 +86,7 @@ handleMonsterMovingTurn monster monsterCell model restOfMonsters =
                                 case foundCell.content of
                                     Empty ->
                                         -- everything is oke!
-                                        let
-                                            animation =
-                                                makeMonsterMoveAnimationUnsafe monster.specie monsterCell foundCell
-
-                                            updatedMonster =
-                                                { monster | coordinate = foundCell.coordinate }
-                                        in
-                                        finishMonsterTurn monster (Just updatedMonster) [ animation ] model restOfMonsters
+                                        finishMonsterMovingTurn monster monsterCell foundCell model restOfMonsters
 
                                     Hero ->
                                         -- not possible, else something is wrong with pathfinding.
@@ -108,13 +101,49 @@ handleMonsterMovingTurn monster monsterCell model restOfMonsters =
                                     Monster _ _ ->
                                         -- we found a monster on the spot our monster wants to move towards
                                         -- that means that another monster already moved here this round.
-                                        -- so we dont move, but do a not moving animation
+                                        -- so we go for the second best spot if its the same steps.
+                                        -- of course we have to check this coordinate again.
                                         let
-                                            animation =
-                                                makeMonsterIdleAnimationUnsafe monster.specie monsterCell
+                                            maybeSecondBestCoordinate =
+                                                tryTakeSecondFromList lowestStepsList
                                         in
-                                        finishMonsterTurn monster Nothing [ animation ] model restOfMonsters
+                                        case maybeSecondBestCoordinate of
+                                            Nothing ->
+                                                finishMonsterIdleTurn monster monsterCell model restOfMonsters
 
+                                            Just secondBestCoordinate ->
+                                                if secondBestCoordinate.steps + 1 /= steps then
+                                                    finishMonsterIdleTurn monster monsterCell model restOfMonsters
+
+                                                else if isCoordinateInMonsterList secondBestCoordinate.coordinate restOfMonsters then
+                                                    -- there is still a monster on this spot, so that monster has to move first.
+                                                    -- we add this monster to the back of the list
+                                                    finishChangedRestOfMonstersList monster model restOfMonsters
+
+                                                else
+                                                    -- now we have a coordinate. We need to check this one as well
+                                                    let
+                                                        getSecondBestCellResult =
+                                                            tryGetCellFromFieldByCoordinate secondBestCoordinate.coordinate field
+                                                    in
+                                                    case getSecondBestCellResult of
+                                                        Err error ->
+                                                            let
+                                                                updatedError =
+                                                                    { method = "handleMonsterMovingTurn - " ++ error.method
+                                                                    , error = error.error
+                                                                    }
+                                                            in
+                                                            ( { model | error = Just updatedError }, Cmd.none )
+
+                                                        Ok secondBestCell ->
+                                                            if secondBestCell.content == Empty then
+                                                                finishMonsterMovingTurn monster monsterCell secondBestCell model restOfMonsters
+
+                                                            else
+                                                                finishMonsterIdleTurn monster monsterCell model restOfMonsters
+
+                                    --finishMonsterMovingTurn monster monsterCell foundCell model restOfMonsters
                                     Obstacle _ ->
                                         -- not possible, else something is wrong with pathfinding.
                                         let
@@ -124,6 +153,36 @@ handleMonsterMovingTurn monster monsterCell model restOfMonsters =
                                                 }
                                         in
                                         ( { model | error = Just updatedError }, Cmd.none )
+
+
+finishMonsterMovingTurn : MonsterModel -> Cell -> Cell -> MainModel -> List MonsterModel -> ( MainModel, Cmd Msg )
+finishMonsterMovingTurn monster monsterCell nextMonsterCell model restOfMonsters =
+    let
+        animation =
+            makeMonsterMoveAnimationUnsafe monster.specie monsterCell nextMonsterCell
+
+        updatedMonster =
+            { monster | coordinate = nextMonsterCell.coordinate }
+    in
+    finishMonsterTurn monster (Just updatedMonster) [ animation ] model restOfMonsters
+
+
+finishMonsterIdleTurn : MonsterModel -> Cell -> MainModel -> List MonsterModel -> ( MainModel, Cmd Msg )
+finishMonsterIdleTurn monster monsterCell model restOfMonsters =
+    let
+        animation =
+            makeMonsterIdleAnimationUnsafe monster.specie monsterCell
+    in
+    finishMonsterTurn monster Nothing [ animation ] model restOfMonsters
+
+
+finishChangedRestOfMonstersList : MonsterModel -> MainModel -> List MonsterModel -> ( MainModel, Cmd Msg )
+finishChangedRestOfMonstersList monster model restOfMonsters =
+    let
+        changedMonsterList =
+            addToTheBackOfTheList monster restOfMonsters
+    in
+    ( model, Task.perform (\_ -> DoNextMonster changedMonsterList) (Task.succeed True) )
 
 
 isCoordinateInMonsterList : Coordinate -> List MonsterModel -> Bool

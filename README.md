@@ -3,9 +3,7 @@ rogue like game
 
 Next programming steps.
 
--- pathfinding first round is not oke
--- if horizontal and vertical are blocked, the corners are automatically set.
--- they should be left empty.
+-- if one is blocked we need to check second coordinate
 -- we need to check second coordinate if it is maybe same steps, so we can move there.
 
 Give hero and monster hit-points. Damage removes hit-points.

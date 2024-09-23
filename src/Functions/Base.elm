@@ -23,3 +23,12 @@ addToTheBackOfTheList a list =
             a :: reversedList
     in
     List.reverse addedList
+
+
+tryTakeSecondFromList : List a -> Maybe a
+tryTakeSecondFromList list =
+    let
+        firstRemoved =
+            List.drop 1 list
+    in
+    List.head firstRemoved
