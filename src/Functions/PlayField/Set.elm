@@ -82,8 +82,38 @@ removeStepsFromPlayField playField =
 
 
 setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster : Int -> Coordinate -> Dict String Cell -> Dict String Cell
-setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster steps coordinate playField =
-    updateGridCellDict coordinate (setStepsIfEmptyOrMovingMonster steps) playField
+setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster steps coordinate field =
+    updateGridCellDict coordinate (setStepsIfEmptyOrMovingMonster steps) field
+
+
+trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster : Int -> Coordinate -> Dict String Cell -> ( Bool, Dict String Cell )
+trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster steps coordinate field =
+    let
+        getCellResult =
+            tryGetCellFromFieldByCoordinate coordinate field
+    in
+    case getCellResult of
+        Err _ ->
+            ( False, field )
+
+        Ok cell ->
+            case cell.content of
+                Empty ->
+                    ( True, setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster steps coordinate field )
+
+                Hero ->
+                    ( False, field )
+
+                Monster _ action ->
+                    case action of
+                        Moving ->
+                            ( True, setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster steps coordinate field )
+
+                        Attacking ->
+                            ( False, field )
+
+                Obstacle _ ->
+                    ( False, field )
 
 
 setStepsToNothing : String -> Cell -> Cell

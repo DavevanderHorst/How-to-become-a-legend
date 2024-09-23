@@ -4,10 +4,9 @@ import Dict exposing (Dict)
 import Functions.Coordinate exposing (emptyCoordinate, getNextCoordinateForDirection, isSameCoordinate)
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
 import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInField, tryGetCellFromFieldByCoordinate)
-import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
+import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster, trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
 import Models.Cell exposing (Cell, Coordinate, CoordinateWithStep)
 import Models.Level exposing (PlayField)
-import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Types exposing (Action(..), CellContent(..), Direction(..))
 
@@ -18,7 +17,7 @@ setPathFindingInPlayField heroSpot playField monsterDict =
         -- first we set the first circle, so we have a start
         -- we calculate how many rounds we need to fully circle our field
         -- then we start circling
-        playFieldWithFirstRoundDone =
+        ( playFieldWithFirstRoundDone, leftOverCoordinates ) =
             setStepsAroundHero heroSpot playField.field
 
         startRoundCoordinate =
@@ -32,7 +31,7 @@ setPathFindingInPlayField heroSpot playField monsterDict =
         doneField =
             -- start at round 2
             -- 0 steps, since we start, 3 steps for our second round, before we switch direction.
-            fillStepsForRestOfPlayField 0 3 2 calculatedRoundsNeeded startRoundCoordinate [] [] playFieldWithFirstRoundDone monsterDict
+            fillStepsForRestOfPlayField 0 3 2 calculatedRoundsNeeded startRoundCoordinate leftOverCoordinates [] playFieldWithFirstRoundDone monsterDict
     in
     { playField | field = doneField }
 
@@ -496,47 +495,6 @@ tryFindCoordinateWithStepsAroundCoordinate coordinate steps field currentDirecti
                     tryFindCoordinateWithStepsAroundCoordinate coordinate steps field nextDirection endDirection False
 
 
-tryFindCoordinateWithLowestStepAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Coordinate -> Result Error Coordinate
-tryFindCoordinateWithLowestStepAroundCoordinate coordinate playField maybeCoordinate =
-    let
-        maybeLowestStepsWithCoordinate =
-            findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeCoordinate findLowestStepsAroundCoordinateStartDirection Nothing playField
-    in
-    case maybeLowestStepsWithCoordinate of
-        Nothing ->
-            Err
-                { method = "Functions.PathFinding.findCoordinateWithLowestStepsAroundCoordinate"
-                , error = "Found no lowest step for monster to move towards"
-                }
-
-        Just ( foundSteps, foundCoordinate ) ->
-            let
-                maybeStepsOnCurrentCoordinate =
-                    getMaybeStepsForCoordinateInField coordinate playField
-            in
-            case maybeStepsOnCurrentCoordinate of
-                Nothing ->
-                    Err
-                        { method = "Functions.PathFinding.findCoordinateWithLowestStepsAroundCoordinate"
-                        , error = "Monster is standing on a coordinate without steps"
-                        }
-
-                Just steps ->
-                    -- we check if we go 1 lower
-                    if steps - foundSteps == 1 then
-                        Ok foundCoordinate
-
-                    else
-                        Err
-                            { method = "Functions.PathFinding.findCoordinateWithLowestStepsAroundCoordinate"
-                            , error =
-                                "Found a lower step("
-                                    ++ String.fromInt foundSteps
-                                    ++ ") but difference is greater then 1 : "
-                                    ++ String.fromInt steps
-                            }
-
-
 findLowestStepsWithCoordinateAroundCoordinateFunction : Coordinate -> Maybe Coordinate -> Direction -> Maybe ( Int, Coordinate ) -> Dict String Cell -> Maybe ( Int, Coordinate )
 findLowestStepsWithCoordinateAroundCoordinateFunction coordinate maybeWrongCoordinate currentDirection maybeStepsWithCoordinate playField =
     let
@@ -625,7 +583,7 @@ goRightAroundAndFindLowestStepsEndDirection =
 -- First circle around hero for steps
 
 
-setStepsAroundHero : Coordinate -> Dict String Cell -> Dict String Cell
+setStepsAroundHero : Coordinate -> Dict String Cell -> ( Dict String Cell, List Coordinate )
 setStepsAroundHero heroSpot playField =
     let
         straightSteps =
@@ -634,28 +592,63 @@ setStepsAroundHero heroSpot playField =
         diagonalSteps =
             2
 
-        upDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Up heroSpot) playField
+        leftOverCoordinatesStartList =
+            []
 
-        upRightDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection UpRight heroSpot) upDone
+        ( isUpOke, upDoneField ) =
+            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Up heroSpot) playField
 
-        rightDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Right heroSpot) upRightDone
+        ( isRightOke, rightDoneField ) =
+            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Right heroSpot) upDoneField
 
-        downRightDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection DownRight heroSpot) rightDone
+        ( isDownOke, downDoneField ) =
+            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Down heroSpot) rightDoneField
 
-        downDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Down heroSpot) downRightDone
+        ( isLeftOke, leftDoneField ) =
+            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Left heroSpot) downDoneField
 
-        downLeftDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection DownLeft heroSpot) downDone
+        ( upRightDonePlayField, upRightDoneLeftOverCoordinates ) =
+            let
+                nextCoordinate =
+                    getNextCoordinateForDirection UpRight heroSpot
+            in
+            if isUpOke || isRightOke then
+                ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate leftDoneField, leftOverCoordinatesStartList )
 
-        leftDone =
-            setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Left heroSpot) downLeftDone
+            else
+                ( leftDoneField, nextCoordinate :: leftOverCoordinatesStartList )
+
+        ( downRightDonePlayField, downRightDoneLeftOverCoordinates ) =
+            let
+                nextCoordinate =
+                    getNextCoordinateForDirection DownRight heroSpot
+            in
+            if isDownOke || isRightOke then
+                ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate upRightDonePlayField, upRightDoneLeftOverCoordinates )
+
+            else
+                ( upRightDonePlayField, nextCoordinate :: upRightDoneLeftOverCoordinates )
+
+        ( downLeftDonePlayField, downLeftDoneLeftOverCoordinate ) =
+            let
+                nextCoordinate =
+                    getNextCoordinateForDirection DownLeft heroSpot
+            in
+            if isDownOke || isLeftOke then
+                ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate downRightDonePlayField, downRightDoneLeftOverCoordinates )
+
+            else
+                ( downRightDonePlayField, nextCoordinate :: downRightDoneLeftOverCoordinates )
     in
-    setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps (getNextCoordinateForDirection UpLeft heroSpot) leftDone
+    let
+        nextCoordinate =
+            getNextCoordinateForDirection UpLeft heroSpot
+    in
+    if isUpOke || isLeftOke then
+        ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate downLeftDonePlayField, downLeftDoneLeftOverCoordinate )
+
+    else
+        ( downLeftDonePlayField, nextCoordinate :: downLeftDoneLeftOverCoordinate )
 
 
 calculateRoundsNeededForPathFinding : Coordinate -> Int -> Int -> Int

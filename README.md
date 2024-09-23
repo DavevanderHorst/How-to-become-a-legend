@@ -3,9 +3,10 @@ rogue like game
 
 Next programming steps.
 
-Make monster turn after hero moved.    
-    -- monster without a path, so blocked by other monster for example, don't move. make confused animation    
-    -- 2 moving monsters can move into each other. Fix this.
+-- pathfinding first round is not oke
+-- if horizontal and vertical are blocked, the corners are automatically set.
+-- they should be left empty.
+-- we need to check second coordinate if it is maybe same steps, so we can move there.
 
 Give hero and monster hit-points. Damage removes hit-points.
 Make a monster death animation.
