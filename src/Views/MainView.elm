@@ -9,8 +9,8 @@ import Models.Level exposing (Level)
 import Models.MainModel exposing (MainModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
-import Types exposing (CellContent(..), ObstacleType(..), Specie(..))
-import Views.Attributes exposing (makeBaseGridCellAttributes)
+import Types exposing (CellContent(..), Display(..), ObstacleType(..), Specie(..))
+import Views.Attributes exposing (baseCellAttributes, makeBaseGridCellAttributes, monsterNumberAnimationAttributes, monsterNumberImageAttributes)
 import Views.ViewHelpers exposing (makePxStringFromFloat)
 
 
@@ -66,25 +66,22 @@ drawCell : String -> Cell -> List (Svg Msg) -> List (Svg Msg)
 drawCell _ cell svgList =
     -- first parameter is the key of the dict
     let
-        baseGridCellAttributes =
-            makeBaseGridCellAttributes cell "white" 0 0
-
         baseRect =
-            --Svg.g []
-            --                        [ Svg.rect baseGridCellAttributes []
-            --                        ]
-            case cell.stepsToHero of
-                Nothing ->
-                    Svg.g []
-                        [ Svg.rect baseGridCellAttributes []
-                        ]
+            Svg.g []
+                [ Svg.rect (makeBaseGridCellAttributes cell) []
+                ]
 
-                Just steps ->
-                    Svg.g []
-                        [ Svg.rect baseGridCellAttributes []
-                        , Svg.text_ (makeBaseGridCellAttributes cell "black" 5 20) [ Svg.text (String.fromInt steps) ]
-                        ]
-
+        --case cell.stepsToHero of
+        --    Nothing ->
+        --        Svg.g []
+        --            [ Svg.rect baseGridCellAttributes []
+        --            ]
+        --
+        --    Just steps ->
+        --        Svg.g []
+        --            [ Svg.rect baseGridCellAttributes []
+        --            , Svg.text_ (makeBaseGridCellAttributes cell "black" 5 20) [ Svg.text (String.fromInt steps) ]
+        --            ]
         --Next lines are to see steps in playField
     in
     case cell.content of
@@ -92,31 +89,42 @@ drawCell _ cell svgList =
             baseRect :: svgList
 
         Hero ->
-            baseRect :: renderHeroCell baseGridCellAttributes :: svgList
+            baseRect :: renderHeroCell cell Image :: svgList
 
         Monster specie _ ->
-            baseRect :: renderMonsterCell specie baseGridCellAttributes :: svgList
+            baseRect :: renderMonsterCell cell specie Image :: svgList
 
         Obstacle obstacleType ->
-            baseRect :: renderObstacleCell obstacleType baseGridCellAttributes :: svgList
+            baseRect :: renderObstacleCell obstacleType cell :: svgList
 
 
-renderMonsterCell : Specie -> List (Attribute msg) -> Svg msg
-renderMonsterCell specie attr =
+renderMonsterCell : Cell -> Specie -> Display -> Svg msg
+renderMonsterCell cell specie displayType =
     let
+        ( baseAttributes, textAttributes ) =
+            case displayType of
+                Image ->
+                    ( makeBaseGridCellAttributes cell, monsterNumberImageAttributes cell )
+
+                Animation ->
+                    ( baseCellAttributes, monsterNumberAnimationAttributes )
+
         imageLink =
             case specie of
                 Dummy ->
                     "assets/images/dummyNoBg.png"
 
         imageAttributes =
-            SvgAttr.xlinkHref imageLink :: attr
+            SvgAttr.xlinkHref imageLink :: baseAttributes
     in
-    Svg.image imageAttributes []
+    Svg.g []
+        [ Svg.image imageAttributes []
+        , Svg.text_ textAttributes [ Svg.text "3" ]
+        ]
 
 
-renderObstacleCell : ObstacleType -> List (Attribute msg) -> Svg msg
-renderObstacleCell obstacle attr =
+renderObstacleCell : ObstacleType -> Cell -> Svg msg
+renderObstacleCell obstacle cell =
     let
         imageLink =
             case obstacle of
@@ -124,15 +132,23 @@ renderObstacleCell obstacle attr =
                     "assets/images/rock.png"
 
         imageAttributes =
-            SvgAttr.xlinkHref imageLink :: attr
+            SvgAttr.xlinkHref imageLink :: makeBaseGridCellAttributes cell
     in
     Svg.image imageAttributes []
 
 
-renderHeroCell : List (Attribute msg) -> Svg msg
-renderHeroCell attr =
+renderHeroCell : Cell -> Display -> Svg msg
+renderHeroCell cell display =
     let
         attributes =
-            SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: attr
+            case display of
+                Image ->
+                    makeBaseGridCellAttributes cell
+
+                Animation ->
+                    baseCellAttributes
+
+        attributesWithImage =
+            SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: attributes
     in
-    Svg.image attributes []
+    Svg.image attributesWithImage []

@@ -3,19 +3,14 @@ module Functions.Animations.Attack exposing (..)
 import Constants.FieldSizes exposing (halfSquareSize)
 import Constants.Monster exposing (getDamageForSpecie)
 import Constants.Times exposing (halfHeroAttackAnimationDuration, halfMonsterAnimationDuration, heroAttackAnimationDuration, monsterAnimationDuration)
-import Dict exposing (Dict)
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
-import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
-import Functions.ToString exposing (coordinateToString)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
-import Models.MainModel exposing (Error)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
-import Svg.Attributes as SvgAttr
-import Types exposing (CellContent(..), Specie)
-import Views.Attributes exposing (baseCellAttributes)
+import Types exposing (CellContent(..), Display(..), Specie)
+import Views.Attributes exposing (textAttributes)
 import Views.MainView exposing (renderHeroCell, renderMonsterCell)
 
 
@@ -37,7 +32,7 @@ makeMonsterAttackAnimationSvgsUnsafe monsterCell specie heroCell =
 
 makeMonsterAttackAnimation : Cell -> Specie -> Cell -> Svg Msg
 makeMonsterAttackAnimation monsterCell specie heroCell =
-    makeAttackAnimationSvg monsterCell heroCell halfMonsterAnimationDuration (renderMonsterCell specie baseCellAttributes)
+    makeAttackAnimationSvg monsterCell heroCell halfMonsterAnimationDuration (renderMonsterCell monsterCell specie Animation)
 
 
 makeHeroAttackAnimationSvgs : Cell -> Cell -> Int -> List (Svg Msg)
@@ -55,7 +50,7 @@ makeHeroAttackAnimationSvgs heroCell attackedCell damage =
 
 makeHeroAttackAnimation : Cell -> Cell -> Svg Msg
 makeHeroAttackAnimation heroCell attackedCell =
-    makeAttackAnimationSvg heroCell attackedCell halfHeroAttackAnimationDuration (renderHeroCell baseCellAttributes)
+    makeAttackAnimationSvg heroCell attackedCell halfHeroAttackAnimationDuration (renderHeroCell heroCell Animation)
 
 
 makeAttackAnimationSvg : Cell -> Cell -> Int -> Svg msg -> Svg msg
@@ -87,16 +82,7 @@ makeAttackAnimation startCell attackedCell duration =
 
 makeDamageSvgAnimation : Cell -> Int -> Int -> Svg Msg
 makeDamageSvgAnimation cell damage duration =
-    animatedG (makeDamageAnimation cell duration) [] [ Svg.text_ attackTextAttributes [ Svg.text (String.fromInt damage) ] ]
-
-
-attackTextAttributes : List (Attribute msg)
-attackTextAttributes =
-    [ SvgAttr.fill "red"
-    , SvgAttr.fontWeight "950"
-    , SvgAttr.fontFamily "Helvetica"
-    , SvgAttr.stroke "white"
-    ]
+    animatedG (makeDamageAnimation cell duration) [] [ Svg.text_ (textAttributes "red") [ Svg.text (String.fromInt damage) ] ]
 
 
 makeDamageAnimation : Cell -> Int -> Animation

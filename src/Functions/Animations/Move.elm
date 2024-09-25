@@ -7,19 +7,18 @@ import Models.Cell exposing (Cell, Coordinate)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Svg)
-import Types exposing (Specie)
-import Views.Attributes exposing (baseCellAttributes)
+import Types exposing (Display(..), Specie)
 import Views.MainView exposing (renderHeroCell, renderMonsterCell)
 
 
 makeHeroMoveAnimationSvg : Cell -> Cell -> Svg Msg
 makeHeroMoveAnimationSvg heroCell nextCell =
-    makeMoveAnimationSvg (renderHeroCell baseCellAttributes) heroMoveAnimationDuration heroCell nextCell
+    makeMoveAnimationSvg (renderHeroCell heroCell Animation) heroMoveAnimationDuration heroCell nextCell
 
 
 makeMonsterMoveAnimationUnsafe : Specie -> Cell -> Cell -> Svg Msg
 makeMonsterMoveAnimationUnsafe specie monsterCell moveToCell =
-    makeMoveAnimationSvg (renderMonsterCell specie baseCellAttributes) monsterAnimationDuration monsterCell moveToCell
+    makeMoveAnimationSvg (renderMonsterCell monsterCell specie Animation) monsterAnimationDuration monsterCell moveToCell
 
 
 makeMoveAnimationSvg : Svg Msg -> Int -> Cell -> Cell -> Svg Msg

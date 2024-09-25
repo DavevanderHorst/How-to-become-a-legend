@@ -17,6 +17,11 @@ type ObstacleType
     = Rock
 
 
+type Display
+    = Image
+    | Animation
+
+
 type Specie
     = Dummy
 

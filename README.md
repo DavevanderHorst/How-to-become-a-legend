@@ -3,12 +3,10 @@ rogue like game
 
 Next programming steps.
 
--- if one is blocked we need to check second coordinate
--- we need to check second coordinate if it is maybe same steps, so we can move there.
-
+Give monsters a small number in bottom corner.
+Their stats are displayed next to field.
 Give hero and monster hit-points. Damage removes hit-points.
 Make a monster death animation.
-
 
 
 IDEAS!
@@ -34,3 +32,4 @@ to view errors, use elm reactor and open Main.elm
  -- THINGS TODO - if we feel like it
  
 - attack animation, tilt back, tilt forward
+- flip hero, towards he attacks/moves
