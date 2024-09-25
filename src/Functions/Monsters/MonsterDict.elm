@@ -1,7 +1,7 @@
 module Functions.Monsters.MonsterDict exposing (..)
 
 import Dict exposing (Dict)
-import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.Helpers exposing (makeDictKeyFromCoordinate)
 import Models.Cell exposing (Coordinate)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
@@ -21,9 +21,15 @@ tryGetMonsterFromMonsterDictByCoordinate coordinate monsterDict =
     let
         dictKey =
             makeDictKeyFromCoordinate coordinate
+    in
+    tryGetMonsterFromMonsterDictByKey dictKey monsterDict
 
+
+tryGetMonsterFromMonsterDictByKey : String -> Dict String MonsterModel -> Result Error MonsterModel
+tryGetMonsterFromMonsterDictByKey key monsterDict =
+    let
         maybeMonster =
-            Dict.get dictKey monsterDict
+            Dict.get key monsterDict
     in
     case maybeMonster of
         Just monster ->
@@ -32,5 +38,14 @@ tryGetMonsterFromMonsterDictByCoordinate coordinate monsterDict =
         Nothing ->
             Err
                 { method = "getMonsterFromMonsterDictByCoordinate"
-                , error = "Coordinate is not in our monster dict : " ++ dictKey
+                , error = "Coordinate is not in our monster dict : " ++ key
                 }
+
+
+removeMonsterFromDictByCoordinateUnsafe : Coordinate -> Dict String MonsterModel -> Dict String MonsterModel
+removeMonsterFromDictByCoordinateUnsafe coordinate monsterDict =
+    let
+        dictKey =
+            makeDictKeyFromCoordinate coordinate
+    in
+    Dict.remove dictKey monsterDict

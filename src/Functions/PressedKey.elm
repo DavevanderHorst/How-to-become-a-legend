@@ -144,7 +144,7 @@ handlePressedArrowDirection direction model =
                     in
                     ( { model | error = Just newError }, Cmd.none )
 
-                Monster _ _ ->
+                Monster ->
                     -- need to roll damage die then,
                     -- we move into a monster, so attack!!
                     -- make an attack animation

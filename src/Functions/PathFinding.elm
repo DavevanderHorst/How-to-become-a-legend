@@ -3,8 +3,10 @@ module Functions.PathFinding exposing (..)
 import Dict exposing (Dict)
 import Functions.Coordinate exposing (emptyCoordinate, getNextCoordinateForDirection, isSameCoordinate)
 import Functions.Direction exposing (findNextDirectionForGoingAroundUnSafe)
-import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInField, tryGetCellFromFieldByCoordinate)
-import Functions.PlayField.Set exposing (setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster, trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster)
+import Functions.Monsters.MonsterDict exposing (tryGetMonsterFromMonsterDictByCoordinate, tryGetMonsterFromMonsterDictByKey)
+import Functions.PlayField.Get exposing (getMaybeStepsForCoordinateInField, tryGetCellFromFieldByCoordinate, tryGetCellFromFieldByKey)
+import Functions.PlayField.Helpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.Set exposing (setStepsForCoordinateInFieldIfEmptyOrMovingMonster, setStepsForCoordinateInFieldUnsafe, trySetStepsForCoordinateInFieldIfEmptyOrMovingMonster)
 import Models.Cell exposing (Cell, Coordinate, CoordinateWithStep)
 import Models.Level exposing (PlayField)
 import Models.Monster exposing (MonsterModel)
@@ -17,8 +19,8 @@ setPathFindingInPlayField heroSpot playField monsterDict =
         -- first we set the first circle, so we have a start
         -- we calculate how many rounds we need to fully circle our field
         -- then we start circling
-        ( playFieldWithFirstRoundDone, leftOverCoordinates ) =
-            setStepsAroundHero heroSpot playField.field
+        ( fieldWithFirstRoundDone, leftOverCoordinates ) =
+            setStepsAroundHero heroSpot playField.field monsterDict
 
         startRoundCoordinate =
             -- we start 1 right from the top left
@@ -31,13 +33,13 @@ setPathFindingInPlayField heroSpot playField monsterDict =
         doneField =
             -- start at round 2
             -- 0 steps, since we start, 3 steps for our second round, before we switch direction.
-            fillStepsForRestOfPlayField 0 3 2 calculatedRoundsNeeded startRoundCoordinate leftOverCoordinates [] playFieldWithFirstRoundDone monsterDict
+            fillStepsForRestOfField 0 3 2 calculatedRoundsNeeded startRoundCoordinate leftOverCoordinates [] fieldWithFirstRoundDone monsterDict
     in
     { playField | field = doneField }
 
 
-fillStepsForRestOfPlayField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> List (List Coordinate) -> Dict String Cell -> Dict String MonsterModel -> Dict String Cell
-fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds startSpot todoCoordinates coordinatesByRoundList playField monsterDict =
+fillStepsForRestOfField : Int -> Int -> Int -> Int -> Coordinate -> List Coordinate -> List (List Coordinate) -> Dict String Cell -> Dict String MonsterModel -> Dict String Cell
+fillStepsForRestOfField currentStep maxSteps currentRoundNumber maxRounds startSpot todoCoordinates coordinatesByRoundList playField monsterDict =
     -- first we go right around, update playField and save all found PathFindingCoordinates in a list
     -- We save all these by round, and when we foldl, we can go back rounds.
     -- We go left around, doing this by starting with the last one we put in the list, and check all coordinates again.
@@ -77,7 +79,7 @@ fillStepsForRestOfPlayField currentStep maxSteps currentRoundNumber maxRounds st
             newStartSpot =
                 { startSpot | rowNumber = startSpot.rowNumber - 1, columnNumber = startSpot.columnNumber - 1 }
         in
-        fillStepsForRestOfPlayField 0
+        fillStepsForRestOfField 0
             (maxSteps + 2)
             (currentRoundNumber + 1)
             maxRounds
@@ -144,7 +146,7 @@ checkCoordinateForStepChanges coordinate ( playField, hasChanged ) =
                     -- we set it now, but keep it in the to do list
                     let
                         updatedPlayField =
-                            setFoundStepsInPlayFieldByCoordinate newLowestStepsAround coordinate playField
+                            setOneHigherStepForCoordinateInPlayFieldUnsafe newLowestStepsAround coordinate playField
                     in
                     ( updatedPlayField, True )
 
@@ -154,13 +156,18 @@ checkCoordinateForStepChanges coordinate ( playField, hasChanged ) =
                         -- Found a change, so we set playField
                         let
                             updatedPlayField =
-                                setFoundStepsInPlayFieldByCoordinate newLowestStepsAround coordinate playField
+                                setOneHigherStepForCoordinateInPlayFieldUnsafe newLowestStepsAround coordinate playField
                         in
                         ( updatedPlayField, True )
 
                     else
                         -- notting changed
                         ( playField, hasChanged )
+
+
+setOneHigherStepForCoordinateInPlayFieldUnsafe : Int -> Coordinate -> Dict String Cell -> Dict String Cell
+setOneHigherStepForCoordinateInPlayFieldUnsafe steps coordinate field =
+    setStepsForCoordinateInFieldUnsafe coordinate (steps + 1) field
 
 
 checkLeftOverCoordinatesFirstTime : List Coordinate -> Dict String Cell -> Dict String Cell
@@ -220,7 +227,7 @@ setStepsForCheckLeftOverCoordinate : Int -> Coordinate -> Dict String Cell -> ( 
 setStepsForCheckLeftOverCoordinate steps coordinate playField =
     let
         updatedPlayField =
-            setFoundStepsInPlayFieldByCoordinate steps coordinate playField
+            setOneHigherStepForCoordinateInPlayFieldUnsafe steps coordinate playField
     in
     ( updatedPlayField, True )
 
@@ -257,13 +264,13 @@ checkFoundCellAgainAndSetStepsInPlayField foundCoordinate ( playField, toDoCoord
             -- Now found steps are always lowest, so we just set it again.
             let
                 updatedPlayField =
-                    setFoundStepsInPlayFieldByCoordinate lowestStepsAround foundCoordinate playField
+                    setStepsForCoordinateInFieldUnsafe foundCoordinate (lowestStepsAround + 1) playField
             in
             ( updatedPlayField, toDoCoordinates )
 
 
-addCoordinatesToCoordinatesToDoList : Int -> Direction -> Coordinate -> List Coordinate -> Dict String Cell -> List Coordinate
-addCoordinatesToCoordinatesToDoList diff direction currentCoordinate coordinatesToDoList playField =
+addCoordinatesToCoordinatesToDoList : Int -> Direction -> Coordinate -> List Coordinate -> Dict String Cell -> Dict String MonsterModel -> List Coordinate
+addCoordinatesToCoordinatesToDoList diff direction currentCoordinate coordinatesToDoList field monsterDict =
     -- we keep adding, until the difference is 1 or we meet an obstacle
     if diff == 1 then
         coordinatesToDoList
@@ -271,14 +278,14 @@ addCoordinatesToCoordinatesToDoList diff direction currentCoordinate coordinates
     else
         let
             getCellResult =
-                tryGetCellFromFieldByCoordinate currentCoordinate playField
+                tryGetCellFromFieldByCoordinate currentCoordinate field
         in
         case getCellResult of
             Err _ ->
                 coordinatesToDoList
 
             Ok cell ->
-                if isBlocked cell.content then
+                if isBlocked cell.content currentCoordinate monsterDict then
                     coordinatesToDoList
 
                 else
@@ -293,11 +300,11 @@ addCoordinatesToCoordinatesToDoList diff direction currentCoordinate coordinates
                         nextCoordinate =
                             getNextCoordinateForDirection direction currentCoordinate
                     in
-                    addCoordinatesToCoordinatesToDoList (diff - 1) direction nextCoordinate updatedCoordinatesToDoList playField
+                    addCoordinatesToCoordinatesToDoList (diff - 1) direction nextCoordinate updatedCoordinatesToDoList field monsterDict
 
 
-isBlocked : CellContent -> Bool
-isBlocked content =
+isBlocked : CellContent -> Coordinate -> Dict String MonsterModel -> Bool
+isBlocked content coordinate monsterDict =
     case content of
         Empty ->
             False
@@ -305,13 +312,23 @@ isBlocked content =
         Hero ->
             True
 
-        Monster _ action ->
-            case action of
-                Moving ->
+        Monster ->
+            let
+                getMonsterResult =
+                    tryGetMonsterFromMonsterDictByCoordinate coordinate monsterDict
+            in
+            case getMonsterResult of
+                Err _ ->
+                    -- Should not be possible, we check if monsters are on right position in monsters turn.
                     False
 
-                Attacking ->
-                    True
+                Ok monster ->
+                    case monster.action of
+                        Moving ->
+                            False
+
+                        Attacking ->
+                            True
 
         Obstacle _ ->
             True
@@ -328,8 +345,11 @@ goRightAroundAndFindLowestSteps :
     -> ( List Coordinate, Dict String Cell )
 goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoordinate playField foundCoordinatesList monsterDict =
     let
+        dictKey =
+            makeDictKeyFromCoordinate currentCoordinate
+
         currentCellResult =
-            tryGetCellFromFieldByCoordinate currentCoordinate playField
+            tryGetCellFromFieldByKey dictKey playField
 
         ( updatedFoundCoordinatesList, updatedPlayField ) =
             case currentCellResult of
@@ -344,14 +364,23 @@ goRightAroundAndFindLowestSteps currentDirection doneSteps maxSteps currentCoord
                         Hero ->
                             ( foundCoordinatesList, playField )
 
-                        Monster _ action ->
-                            case action of
-                                Moving ->
-                                    findLowestSteps currentCoordinate foundCoordinatesList playField
-
-                                Attacking ->
-                                    -- an attacking monster is blocking his cell. So no steps set.
+                        Monster ->
+                            let
+                                getMonsterResult =
+                                    tryGetMonsterFromMonsterDictByKey dictKey monsterDict
+                            in
+                            case getMonsterResult of
+                                Err _ ->
                                     ( foundCoordinatesList, playField )
+
+                                Ok monster ->
+                                    case monster.action of
+                                        Moving ->
+                                            findLowestSteps currentCoordinate foundCoordinatesList playField
+
+                                        Attacking ->
+                                            -- an attacking monster is blocking his cell. So no steps set.
+                                            ( foundCoordinatesList, playField )
 
                         Obstacle _ ->
                             ( foundCoordinatesList, playField )
@@ -394,16 +423,9 @@ findLowestSteps currentCoordinate foundCoordinatesList playField =
         Just steps ->
             let
                 newPlayField =
-                    setFoundStepsInPlayFieldByCoordinate steps currentCoordinate playField
+                    setStepsForCoordinateInFieldUnsafe currentCoordinate (steps + 1) playField
             in
             ( updatedList, newPlayField )
-
-
-setFoundStepsInPlayFieldByCoordinate : Int -> Coordinate -> Dict String Cell -> Dict String Cell
-setFoundStepsInPlayFieldByCoordinate steps coordinate playField =
-    -- found steps is from a coordinate 1 away, so need to add one.
-    -- we checked that cell is empty, so we know it is.
-    setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster (steps + 1) coordinate playField
 
 
 findLowestStepsAroundCoordinate : Coordinate -> Dict String Cell -> Maybe Int
@@ -583,8 +605,8 @@ goRightAroundAndFindLowestStepsEndDirection =
 -- First circle around hero for steps
 
 
-setStepsAroundHero : Coordinate -> Dict String Cell -> ( Dict String Cell, List Coordinate )
-setStepsAroundHero heroSpot playField =
+setStepsAroundHero : Coordinate -> Dict String Cell -> Dict String MonsterModel -> ( Dict String Cell, List Coordinate )
+setStepsAroundHero heroSpot field monsterDict =
     let
         straightSteps =
             1
@@ -596,16 +618,16 @@ setStepsAroundHero heroSpot playField =
             []
 
         ( isUpOke, upDoneField ) =
-            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Up heroSpot) playField
+            trySetStepsForCoordinateInFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Up heroSpot) field monsterDict
 
         ( isRightOke, rightDoneField ) =
-            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Right heroSpot) upDoneField
+            trySetStepsForCoordinateInFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Right heroSpot) upDoneField monsterDict
 
         ( isDownOke, downDoneField ) =
-            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Down heroSpot) rightDoneField
+            trySetStepsForCoordinateInFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Down heroSpot) rightDoneField monsterDict
 
         ( isLeftOke, leftDoneField ) =
-            trySetStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Left heroSpot) downDoneField
+            trySetStepsForCoordinateInFieldIfEmptyOrMovingMonster straightSteps (getNextCoordinateForDirection Left heroSpot) downDoneField monsterDict
 
         ( upRightDonePlayField, upRightDoneLeftOverCoordinates ) =
             let
@@ -613,7 +635,7 @@ setStepsAroundHero heroSpot playField =
                     getNextCoordinateForDirection UpRight heroSpot
             in
             if isUpOke || isRightOke then
-                ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate leftDoneField, leftOverCoordinatesStartList )
+                ( setStepsForCoordinateInFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate leftDoneField monsterDict, leftOverCoordinatesStartList )
 
             else
                 ( leftDoneField, nextCoordinate :: leftOverCoordinatesStartList )
@@ -624,7 +646,7 @@ setStepsAroundHero heroSpot playField =
                     getNextCoordinateForDirection DownRight heroSpot
             in
             if isDownOke || isRightOke then
-                ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate upRightDonePlayField, upRightDoneLeftOverCoordinates )
+                ( setStepsForCoordinateInFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate upRightDonePlayField monsterDict, upRightDoneLeftOverCoordinates )
 
             else
                 ( upRightDonePlayField, nextCoordinate :: upRightDoneLeftOverCoordinates )
@@ -635,7 +657,7 @@ setStepsAroundHero heroSpot playField =
                     getNextCoordinateForDirection DownLeft heroSpot
             in
             if isDownOke || isLeftOke then
-                ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate downRightDonePlayField, downRightDoneLeftOverCoordinates )
+                ( setStepsForCoordinateInFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate downRightDonePlayField monsterDict, downRightDoneLeftOverCoordinates )
 
             else
                 ( downRightDonePlayField, nextCoordinate :: downRightDoneLeftOverCoordinates )
@@ -645,7 +667,7 @@ setStepsAroundHero heroSpot playField =
             getNextCoordinateForDirection UpLeft heroSpot
     in
     if isUpOke || isLeftOke then
-        ( setStepsForCoordinateInPlayFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate downLeftDonePlayField, downLeftDoneLeftOverCoordinate )
+        ( setStepsForCoordinateInFieldIfEmptyOrMovingMonster diagonalSteps nextCoordinate downLeftDonePlayField monsterDict, downLeftDoneLeftOverCoordinate )
 
     else
         ( downLeftDonePlayField, nextCoordinate :: downLeftDoneLeftOverCoordinate )

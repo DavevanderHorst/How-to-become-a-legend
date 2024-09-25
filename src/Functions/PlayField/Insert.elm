@@ -1,8 +1,8 @@
 module Functions.PlayField.Insert exposing (..)
 
 import Dict exposing (Dict)
-import Functions.PlayField.Get exposing (tryGetCellFromFieldByKey)
-import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate, tryGetCellFromFieldByKey)
+import Functions.PlayField.Helpers exposing (makeDictKeyFromCoordinate, setCellContentToHero, setCellContentToMonster, setCellContentToObstacle, updateGridCellDictByCoordinateUnsafe, updateGridCellDictByKeyUnsafe)
 import Functions.ToString exposing (cellContentToString, obstacleTypeToString, specieToString)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (Error)
@@ -64,7 +64,7 @@ trySetObstaclesInPlayField obstacle playFieldResult =
 
                 Ok cell ->
                     if cell.content == Empty then
-                        Ok (updateGridCellDict dictKey (setCellContentToObstacle obstacle.obstacleType) playField)
+                        Ok (updateGridCellDictByKeyUnsafe dictKey (setCellContentToObstacle obstacle.obstacleType) playField)
 
                     else
                         Err
@@ -79,11 +79,7 @@ trySetObstaclesInPlayField obstacle playFieldResult =
 
 updateMonsterInPlayFieldUnsafe : MonsterModel -> Dict String Cell -> Dict String Cell
 updateMonsterInPlayFieldUnsafe monster playField =
-    let
-        dictKey =
-            makeDictKeyFromCoordinate monster.coordinate
-    in
-    updateGridCellDict dictKey (setCellContentToMonster monster.specie monster.action) playField
+    updateGridCellDictByCoordinateUnsafe monster.coordinate setCellContentToMonster playField
 
 
 trySetMonsterInPlayField : MonsterModel -> Result Error (Dict String Cell) -> Result Error (Dict String Cell)
@@ -106,7 +102,7 @@ trySetMonsterInPlayField monster playFieldResult =
 
                 Ok cell ->
                     if cell.content == Empty then
-                        Ok (updateGridCellDict dictKey (setCellContentToMonster monster.specie monster.action) playField)
+                        Ok (updateGridCellDictByKeyUnsafe dictKey setCellContentToMonster playField)
 
                     else
                         Err
@@ -122,11 +118,8 @@ trySetMonsterInPlayField monster playFieldResult =
 trySetHeroInPlayField : Coordinate -> Dict String Cell -> Result Error (Dict String Cell)
 trySetHeroInPlayField coordinate playField =
     let
-        dictKey =
-            makeDictKeyFromCoordinate coordinate
-
         getCellResult =
-            tryGetCellFromFieldByKey dictKey playField
+            tryGetCellFromFieldByCoordinate coordinate playField
     in
     case getCellResult of
         Err err ->
@@ -134,37 +127,10 @@ trySetHeroInPlayField coordinate playField =
 
         Ok cell ->
             if cell.content == Empty then
-                Ok (updateGridCellDict dictKey setCellContentToHero playField)
+                Ok (updateGridCellDictByCoordinateUnsafe coordinate setCellContentToHero playField)
 
             else
                 Err
                     { method = "Functions.Dict.Insert.trySetHeroInPlayField"
                     , error = "Cant set hero in play field, cell is not empty : " ++ cellContentToString cell.content
                     }
-
-
-setCellContentToHero : Maybe Cell -> Maybe Cell
-setCellContentToHero =
-    setCellContent Hero
-
-
-setCellContentToMonster : Specie -> Action -> Maybe Cell -> Maybe Cell
-setCellContentToMonster specie action =
-    setCellContent (Monster specie action)
-
-
-setCellContentToObstacle : ObstacleType -> Maybe Cell -> Maybe Cell
-setCellContentToObstacle obstacleType =
-    setCellContent (Obstacle obstacleType)
-
-
-setCellContent : CellContent -> Maybe Cell -> Maybe Cell
-setCellContent newContent =
-    Maybe.map
-        (\old -> { old | content = newContent })
-
-
-updateGridCellDict : String -> (Maybe Cell -> Maybe Cell) -> Dict String Cell -> Dict String Cell
-updateGridCellDict key function gridCellDict =
-    -- Unsafe, only use when your 100% sure cellState is Empty
-    Dict.update key function gridCellDict

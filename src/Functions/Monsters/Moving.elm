@@ -98,7 +98,7 @@ handleMonsterMovingTurn monster monsterCell model restOfMonsters =
                                         in
                                         ( { model | error = Just updatedError }, Cmd.none )
 
-                                    Monster _ _ ->
+                                    Monster ->
                                         -- we found a monster on the spot our monster wants to move towards
                                         -- that means that another monster already moved here this round.
                                         -- so we go for the second best spot if its the same steps.

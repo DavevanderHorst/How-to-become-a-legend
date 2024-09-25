@@ -7,6 +7,7 @@ import Functions.Monsters.MonsterDict exposing (addMonsterToMonsterDictUnsafe)
 import Functions.Monsters.Moving exposing (handleMonsterMovingTurn)
 import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
 import Functions.PlayField.Insert exposing (updateMonsterInPlayFieldUnsafe)
+import Functions.ToString exposing (cellContentToString, coordinateToString)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Cell, Coordinate)
 import Models.Level exposing (Level)
@@ -25,16 +26,10 @@ handleMonstersTurn model =
     -- we make a list of our monster, and that we use to make animations for them 1 by 1
     -- we empty our monster dict, and we put them back after we made the animation,
     let
-        oldLevel =
-            model.level
-
         monstersList =
-            Dict.foldl putMonsterInList [] oldLevel.monsterModels
-
-        levelWithEmptyMonsterDict =
-            { oldLevel | monsterModels = Dict.empty }
+            Dict.foldl putMonsterInList [] model.level.monsterDict
     in
-    handleMonsterTurn monstersList { model | level = levelWithEmptyMonsterDict }
+    handleMonsterTurn monstersList model
 
 
 handleMonsterTurn : List MonsterModel -> MainModel -> ( MainModel, Cmd Msg )
@@ -81,15 +76,15 @@ handleMonsterTurn monstersToDoList model =
                     ( { model | error = Just updatedError }, Cmd.none )
 
                 Ok monsterCell ->
-                    let
-                        ( monsterIsInCell, error ) =
-                            checkIfMonsterIsInCell firstMonster monsterCell.content
-                    in
-                    if not monsterIsInCell then
+                    if monsterCell.content /= Monster then
                         let
                             updatedError =
                                 { method = "handleMonsterTurn"
-                                , error = error
+                                , error =
+                                    "There is no monster in given coordinate : "
+                                        ++ coordinateToString firstMonster.coordinate
+                                        ++ ". Content = "
+                                        ++ cellContentToString monsterCell.content
                                 }
                         in
                         ( { model | error = Just updatedError }, Cmd.none )
@@ -103,29 +98,6 @@ handleMonsterTurn monstersToDoList model =
                                 handleMonsterAttackingTurn firstMonster monsterCell model tailOfMonsterList
 
 
-checkIfMonsterIsInCell : MonsterModel -> CellContent -> ( Bool, String )
-checkIfMonsterIsInCell monster content =
-    case content of
-        Empty ->
-            ( False, "Cell content is empty" )
-
-        Hero ->
-            ( False, "Cell content contains a hero" )
-
-        Monster specie action ->
-            if monster.specie /= specie then
-                ( False, "Monster in cell is different specie" )
-
-            else if monster.action /= action then
-                ( False, "Monster in cell has different action" )
-
-            else
-                ( True, "" )
-
-        Obstacle _ ->
-            ( False, "Cell content contains an obstacle" )
-
-
 setMonsterActions : Level -> Level
 setMonsterActions level =
     let
@@ -133,12 +105,12 @@ setMonsterActions level =
             level.playField
 
         ( updatedMonsters, updatedField ) =
-            checkActionTodoForMonsters level.heroModel.coordinate level.monsterModels oldPlayField.field
+            checkActionTodoForMonsters level.heroModel.coordinate level.monsterDict oldPlayField.field
 
         newPlayField =
             { oldPlayField | field = updatedField }
     in
-    { level | monsterModels = updatedMonsters, playField = newPlayField }
+    { level | monsterDict = updatedMonsters, playField = newPlayField }
 
 
 checkActionTodoForMonsters : Coordinate -> Dict String MonsterModel -> Dict String Cell -> ( Dict String MonsterModel, Dict String Cell )

@@ -11,7 +11,7 @@ import Svg exposing (Svg)
 type alias Level =
     { playField : PlayField
     , heroModel : HeroModel
-    , monsterModels : Dict String MonsterModel
+    , monsterDict : Dict String MonsterModel
     , animations : List (Svg Msg)
     }
 

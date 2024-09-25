@@ -1,12 +1,14 @@
 module Views.MainView exposing (..)
 
 import Dict exposing (Dict)
+import Functions.Monsters.MonsterDict exposing (tryGetMonsterFromMonsterDictByKey)
 import Html exposing (Html, audio, div, text)
 import Html.Attributes exposing (id, style)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Cell)
 import Models.Level exposing (Level)
 import Models.MainModel exposing (MainModel)
+import Models.Monster exposing (MonsterModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
 import Types exposing (CellContent(..), Display(..), ObstacleType(..), Specie(..))
@@ -59,11 +61,11 @@ drawLevel level =
         startSvgList =
             level.animations
     in
-    Dict.foldl drawCell startSvgList level.playField.field
+    Dict.foldl (drawCell level.monsterDict) startSvgList level.playField.field
 
 
-drawCell : String -> Cell -> List (Svg Msg) -> List (Svg Msg)
-drawCell _ cell svgList =
+drawCell : Dict String MonsterModel -> String -> Cell -> List (Svg Msg) -> List (Svg Msg)
+drawCell monsterDict key cell svgList =
     -- first parameter is the key of the dict
     let
         baseRect =
@@ -91,8 +93,18 @@ drawCell _ cell svgList =
         Hero ->
             baseRect :: renderHeroCell cell Image :: svgList
 
-        Monster specie _ ->
-            baseRect :: renderMonsterCell cell specie Image :: svgList
+        Monster ->
+            let
+                getMonsterResult =
+                    tryGetMonsterFromMonsterDictByKey key monsterDict
+            in
+            case getMonsterResult of
+                -- we check if monsters are on good spot in monster turn.
+                Err _ ->
+                    svgList
+
+                Ok monster ->
+                    baseRect :: renderMonsterCell cell monster.specie Image :: svgList
 
         Obstacle obstacleType ->
             baseRect :: renderObstacleCell obstacleType cell :: svgList

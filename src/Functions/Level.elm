@@ -1,6 +1,6 @@
 module Functions.Level exposing (..)
 
-import Functions.PlayField.Set exposing (removeHeroFromPlayFieldUnsafe, setHeroInPlayFieldUnsafe, trySetMonsterInPlayField)
+import Functions.PlayField.Set exposing (removeHeroFromFieldUnsafe, setHeroInPlayUnsafe, trySetMonsterInField)
 import Models.Level exposing (Level)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
@@ -14,7 +14,7 @@ setHeroBackInPlayFieldInLevel level =
             level.playField
 
         fieldWithHero =
-            setHeroInPlayFieldUnsafe level.heroModel.coordinate oldPlayField.field
+            setHeroInPlayUnsafe level.heroModel.coordinate oldPlayField.field
 
         updatedPlayField =
             { oldPlayField | field = fieldWithHero }
@@ -30,7 +30,7 @@ removeHeroFromPlayFieldInLevel level =
             level.playField
 
         fieldWithoutHero =
-            removeHeroFromPlayFieldUnsafe level.heroModel.coordinate oldPlayField.field
+            removeHeroFromFieldUnsafe level.heroModel.coordinate oldPlayField.field
 
         updatedPlayField =
             { oldPlayField | field = fieldWithoutHero }
@@ -45,7 +45,7 @@ trySetMonsterInPlayFieldInLevel monster level =
             level.playField
 
         fieldWithMonsterResult =
-            trySetMonsterInPlayField monster oldPlayField.field
+            trySetMonsterInField monster oldPlayField.field
     in
     case fieldWithMonsterResult of
         Ok fieldWithMonster ->

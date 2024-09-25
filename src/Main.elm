@@ -91,7 +91,7 @@ update msg model =
                     setMonsterActions updatedLevel
 
                 playFieldWithPathFinding =
-                    setPathFindingInPlayField levelWithMonsterActionsSet.heroModel.coordinate levelWithMonsterActionsSet.playField levelWithMonsterActionsSet.monsterModels
+                    setPathFindingInPlayField levelWithMonsterActionsSet.heroModel.coordinate levelWithMonsterActionsSet.playField levelWithMonsterActionsSet.monsterDict
 
                 finishedLevel =
                     { levelWithMonsterActionsSet | animations = [], playField = playFieldWithPathFinding }
@@ -132,7 +132,7 @@ update msg model =
 
         MonstersTurn ->
             -- Check if there are any monsters
-            if Dict.isEmpty model.level.monsterModels then
+            if Dict.isEmpty model.level.monsterDict then
                 ( { model | playerInput = Possible }, Cmd.none )
 
             else

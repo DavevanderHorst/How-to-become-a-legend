@@ -1,8 +1,9 @@
 module Functions.Monsters.FinishMonsterTurn exposing (..)
 
 import Constants.Times exposing (monsterAnimationDuration)
+import Functions.Monsters.MonsterDict exposing (removeMonsterFromDictByCoordinateUnsafe)
 import Functions.PlayField.Insert exposing (insertMonsterInToMonsterDict)
-import Functions.PlayField.Set exposing (removeMonsterFromPlayFieldUnsafe)
+import Functions.PlayField.Set exposing (removeMonsterFromFieldUnsafe)
 import Messages exposing (Msg(..))
 import Models.MainModel exposing (MainModel)
 import Models.Monster exposing (MonsterModel)
@@ -14,16 +15,8 @@ import Task
 finishMonsterTurn : MonsterModel -> Maybe MonsterModel -> List (Svg Msg) -> MainModel -> List MonsterModel -> ( MainModel, Cmd Msg )
 finishMonsterTurn oldMonster maybeUpdatedMonster animations model restOfMonsters =
     let
-        updatedMonster =
-            case maybeUpdatedMonster of
-                Nothing ->
-                    oldMonster
-
-                Just monster ->
-                    monster
-
         fieldWithRemovedMonster =
-            removeMonsterFromPlayFieldUnsafe oldMonster model.level.playField.field
+            removeMonsterFromFieldUnsafe oldMonster model.level.playField.field
 
         oldLevel =
             model.level
@@ -34,14 +27,23 @@ finishMonsterTurn oldMonster maybeUpdatedMonster animations model restOfMonsters
         updatedPlayField =
             { oldPlayField | field = fieldWithRemovedMonster }
 
-        updatedMonsters =
-            insertMonsterInToMonsterDict updatedMonster oldLevel.monsterModels
+        ( newMonsters, newMonster ) =
+            case maybeUpdatedMonster of
+                Nothing ->
+                    ( oldLevel.monsterDict, oldMonster )
+
+                Just updatedMonster ->
+                    let
+                        monsterDictWithoutOldMonster =
+                            removeMonsterFromDictByCoordinateUnsafe oldMonster.coordinate oldLevel.monsterDict
+                    in
+                    ( insertMonsterInToMonsterDict updatedMonster monsterDictWithoutOldMonster, updatedMonster )
 
         updatedLevel =
-            { oldLevel | animations = animations, playField = updatedPlayField, monsterModels = updatedMonsters }
+            { oldLevel | animations = animations, playField = updatedPlayField, monsterDict = newMonsters }
 
         nextCommand =
             Process.sleep (toFloat <| monsterAnimationDuration)
-                |> Task.perform (always (MonsterAnimationIsDone updatedMonster restOfMonsters))
+                |> Task.perform (always (MonsterAnimationIsDone newMonster restOfMonsters))
     in
     ( { model | level = updatedLevel }, nextCommand )

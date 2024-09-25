@@ -4,7 +4,7 @@ module Types exposing (..)
 type CellContent
     = Empty
     | Hero
-    | Monster Specie Action
+    | Monster
     | Obstacle ObstacleType
 
 

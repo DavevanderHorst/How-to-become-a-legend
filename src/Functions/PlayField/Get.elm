@@ -1,9 +1,18 @@
 module Functions.PlayField.Get exposing (..)
 
 import Dict exposing (Dict)
-import Functions.PlayField.KeyHelpers exposing (makeDictKeyFromCoordinate)
+import Functions.PlayField.Helpers exposing (makeDictKeyFromCoordinate)
 import Models.Cell exposing (Cell, Coordinate)
 import Models.MainModel exposing (Error)
+
+
+tryGetCellFromFieldByCoordinate : Coordinate -> Dict String Cell -> Result Error Cell
+tryGetCellFromFieldByCoordinate coordinate playField =
+    let
+        key =
+            makeDictKeyFromCoordinate coordinate
+    in
+    tryGetCellFromFieldByKey key playField
 
 
 tryGetCellFromFieldByKey : String -> Dict String Cell -> Result Error Cell
@@ -21,15 +30,6 @@ tryGetCellFromFieldByKey key playField =
 
         Just cell ->
             Ok cell
-
-
-tryGetCellFromFieldByCoordinate : Coordinate -> Dict String Cell -> Result Error Cell
-tryGetCellFromFieldByCoordinate coordinate playField =
-    let
-        key =
-            makeDictKeyFromCoordinate coordinate
-    in
-    tryGetCellFromFieldByKey key playField
 
 
 getMaybeStepsForCoordinateInField : Coordinate -> Dict String Cell -> Maybe Int
