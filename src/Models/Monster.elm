@@ -8,4 +8,5 @@ type alias MonsterModel =
     { coordinate : Coordinate
     , specie : Specie
     , action : Action
+    , number : Int
     }

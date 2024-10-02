@@ -34,14 +34,17 @@ monsterList =
     [ { coordinate = Coordinate 2 4
       , specie = Dummy
       , action = Moving
+      , number = 1
       }
     , { coordinate = Coordinate 1 5
       , specie = Dummy
       , action = Moving
+      , number = 2
       }
     , { coordinate = Coordinate 2 3
       , specie = Dummy
       , action = Moving
+      , number = 3
       }
     ]
 

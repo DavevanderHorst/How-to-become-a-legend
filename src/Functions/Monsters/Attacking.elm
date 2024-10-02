@@ -45,6 +45,6 @@ handleMonsterAttackingTurn monster monsterCell model restOfMonsters =
                 -- Everything is oke!
                 let
                     animations =
-                        makeMonsterAttackAnimationSvgsUnsafe monsterCell monster.specie heroCell
+                        makeMonsterAttackAnimationSvgsUnsafe monsterCell monster heroCell
                 in
                 finishMonsterTurn monster Nothing animations model restOfMonsters

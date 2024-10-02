@@ -6,6 +6,11 @@ squareSize =
     50
 
 
+imageStatsSize : Int
+imageStatsSize =
+    2 * squareSize
+
+
 halfSquareSize : Int
 halfSquareSize =
     squareSize // 2

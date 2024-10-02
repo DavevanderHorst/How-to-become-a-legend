@@ -159,7 +159,7 @@ finishMonsterMovingTurn : MonsterModel -> Cell -> Cell -> MainModel -> List Mons
 finishMonsterMovingTurn monster monsterCell nextMonsterCell model restOfMonsters =
     let
         animation =
-            makeMonsterMoveAnimationUnsafe monster.specie monsterCell nextMonsterCell
+            makeMonsterMoveAnimationUnsafe monster monsterCell nextMonsterCell
 
         updatedMonster =
             { monster | coordinate = nextMonsterCell.coordinate }
@@ -171,7 +171,7 @@ finishMonsterIdleTurn : MonsterModel -> Cell -> MainModel -> List MonsterModel -
 finishMonsterIdleTurn monster monsterCell model restOfMonsters =
     let
         animation =
-            makeMonsterIdleAnimationUnsafe monster.specie monsterCell
+            makeMonsterIdleAnimationUnsafe monster monsterCell
     in
     finishMonsterTurn monster Nothing [ animation ] model restOfMonsters
 

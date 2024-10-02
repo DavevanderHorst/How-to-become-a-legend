@@ -6,6 +6,7 @@ import Constants.Times exposing (halfHeroAttackAnimationDuration, halfMonsterAni
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
+import Models.Monster exposing (MonsterModel)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Attribute, Svg)
@@ -14,15 +15,15 @@ import Views.Attributes exposing (textAttributes)
 import Views.MainView exposing (renderHeroCell, renderMonsterCell)
 
 
-makeMonsterAttackAnimationSvgsUnsafe : Cell -> Specie -> Cell -> List (Svg Msg)
-makeMonsterAttackAnimationSvgsUnsafe monsterCell specie heroCell =
+makeMonsterAttackAnimationSvgsUnsafe : Cell -> MonsterModel -> Cell -> List (Svg Msg)
+makeMonsterAttackAnimationSvgsUnsafe monsterCell monster heroCell =
     -- AttackAnimation is using coordinates, but we are using the screen positions here.
     let
         monsterAttackAnimation =
-            makeMonsterAttackAnimation monsterCell specie heroCell
+            makeMonsterAttackAnimation monsterCell monster heroCell
 
         damage =
-            getDamageForSpecie specie
+            getDamageForSpecie monster.specie
 
         damageAnimation =
             makeDamageSvgAnimation heroCell damage monsterAnimationDuration
@@ -30,9 +31,9 @@ makeMonsterAttackAnimationSvgsUnsafe monsterCell specie heroCell =
     [ monsterAttackAnimation, damageAnimation ]
 
 
-makeMonsterAttackAnimation : Cell -> Specie -> Cell -> Svg Msg
-makeMonsterAttackAnimation monsterCell specie heroCell =
-    makeAttackAnimationSvg monsterCell heroCell halfMonsterAnimationDuration (renderMonsterCell monsterCell specie Animation)
+makeMonsterAttackAnimation : Cell -> MonsterModel -> Cell -> Svg Msg
+makeMonsterAttackAnimation monsterCell monster heroCell =
+    makeAttackAnimationSvg monsterCell heroCell halfMonsterAnimationDuration (renderMonsterCell monsterCell monster Animation)
 
 
 makeHeroAttackAnimationSvgs : Cell -> Cell -> Int -> List (Svg Msg)

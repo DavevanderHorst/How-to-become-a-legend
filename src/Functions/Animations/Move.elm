@@ -4,6 +4,7 @@ import Constants.Times exposing (heroMoveAnimationDuration, monsterAnimationDura
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
+import Models.Monster exposing (MonsterModel)
 import Simple.Animation as Simple exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Svg)
@@ -16,9 +17,9 @@ makeHeroMoveAnimationSvg heroCell nextCell =
     makeMoveAnimationSvg (renderHeroCell heroCell Animation) heroMoveAnimationDuration heroCell nextCell
 
 
-makeMonsterMoveAnimationUnsafe : Specie -> Cell -> Cell -> Svg Msg
-makeMonsterMoveAnimationUnsafe specie monsterCell moveToCell =
-    makeMoveAnimationSvg (renderMonsterCell monsterCell specie Animation) monsterAnimationDuration monsterCell moveToCell
+makeMonsterMoveAnimationUnsafe : MonsterModel -> Cell -> Cell -> Svg Msg
+makeMonsterMoveAnimationUnsafe monster monsterCell moveToCell =
+    makeMoveAnimationSvg (renderMonsterCell monsterCell monster Animation) monsterAnimationDuration monsterCell moveToCell
 
 
 makeMoveAnimationSvg : Svg Msg -> Int -> Cell -> Cell -> Svg Msg

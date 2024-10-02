@@ -1,9 +1,13 @@
 module Views.Attributes exposing (..)
 
-import Constants.FieldSizes exposing (squareSize)
+import Constants.FieldSizes exposing (imageStatsSize, squareSize)
+import Constants.Hero exposing (heroWarriorImageLink)
+import Constants.Monster exposing (getImageLinkForSpecie, monsterNumberOffsetX, monsterNumberOffsetY)
+import Html.Attributes exposing (height, src, style, width)
 import Models.Cell exposing (Cell)
 import Svg exposing (Attribute)
 import Svg.Attributes as SvgAttr
+import Types exposing (Specie)
 import Views.ViewHelpers exposing (makePxStringFromInt)
 
 
@@ -23,7 +27,7 @@ baseGridCellAttributes cell color xOff yOff =
 
 monsterNumberImageAttributes : Cell -> List (Attribute msg)
 monsterNumberImageAttributes cell =
-    baseGridCellAttributes cell "black" 5 20
+    baseGridCellAttributes cell "black" monsterNumberOffsetX monsterNumberOffsetY
 
 
 monsterNumberAnimationAttributes : List (Attribute msg)
@@ -34,8 +38,50 @@ monsterNumberAnimationAttributes =
     in
     [ SvgAttr.width squareSizeInPixelString
     , SvgAttr.height squareSizeInPixelString
-    , SvgAttr.x (makePxStringFromInt 5)
-    , SvgAttr.y (makePxStringFromInt 20)
+    , SvgAttr.x (makePxStringFromInt monsterNumberOffsetX)
+    , SvgAttr.y (makePxStringFromInt monsterNumberOffsetY)
+    ]
+
+
+textAttributes : String -> List (Attribute msg)
+textAttributes color =
+    [ SvgAttr.fill color
+    , SvgAttr.fontWeight "950"
+    , SvgAttr.fontFamily "Helvetica"
+    , SvgAttr.stroke "white"
+    ]
+
+
+monsterNumberStatsAttributes : List (Attribute msg)
+monsterNumberStatsAttributes =
+    [ style "font-weight" "950"
+    , style "font-family" "Helvetica"
+    , style "font-size" "20px"
+    , style "position" "absolute"
+    , style "bottom" "0"
+    , style "right" "0"
+    ]
+
+
+heroImageStatsAttributes : List (Attribute msg)
+heroImageStatsAttributes =
+    imageStatsAttributes heroWarriorImageLink
+
+
+monsterImageStatsAttributes : Specie -> List (Attribute msg)
+monsterImageStatsAttributes specie =
+    let
+        imageLink =
+            getImageLinkForSpecie specie
+    in
+    imageStatsAttributes imageLink
+
+
+imageStatsAttributes : String -> List (Attribute msg)
+imageStatsAttributes imageLink =
+    [ width imageStatsSize
+    , height imageStatsSize
+    , src imageLink
     ]
 
 
@@ -47,13 +93,4 @@ baseCellAttributes =
     in
     [ SvgAttr.width squareSizeInPixelString
     , SvgAttr.height squareSizeInPixelString
-    ]
-
-
-textAttributes : String -> List (Attribute msg)
-textAttributes color =
-    [ SvgAttr.fill color
-    , SvgAttr.fontWeight "950"
-    , SvgAttr.fontFamily "Helvetica"
-    , SvgAttr.stroke "white"
     ]

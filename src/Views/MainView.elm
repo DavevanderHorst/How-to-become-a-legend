@@ -1,19 +1,23 @@
 module Views.MainView exposing (..)
 
+import Constants.FieldSizes exposing (imageStatsSize)
+import Constants.Hero exposing (heroWarriorImageLink)
+import Constants.Monster exposing (getImageLinkForSpecie)
 import Dict exposing (Dict)
 import Functions.Monsters.MonsterDict exposing (tryGetMonsterFromMonsterDictByKey)
-import Html exposing (Html, audio, div, text)
-import Html.Attributes exposing (id, style)
+import Html exposing (Html, audio, div, img, span, text)
+import Html.Attributes exposing (height, id, style, width)
 import Messages exposing (Msg(..))
 import Models.Cell exposing (Cell)
+import Models.Hero exposing (HeroModel)
 import Models.Level exposing (Level)
 import Models.MainModel exposing (MainModel)
 import Models.Monster exposing (MonsterModel)
 import Svg exposing (Attribute, Svg)
 import Svg.Attributes as SvgAttr exposing (visibility)
 import Types exposing (CellContent(..), Display(..), ObstacleType(..), Specie(..))
-import Views.Attributes exposing (baseCellAttributes, makeBaseGridCellAttributes, monsterNumberAnimationAttributes, monsterNumberImageAttributes)
-import Views.ViewHelpers exposing (makePxStringFromFloat)
+import Views.Attributes exposing (baseCellAttributes, heroImageStatsAttributes, makeBaseGridCellAttributes, monsterImageStatsAttributes, monsterNumberAnimationAttributes, monsterNumberImageAttributes, monsterNumberStatsAttributes, textAttributes)
+import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
 
 
 mainView : MainModel -> Html Msg
@@ -45,6 +49,7 @@ mainView model =
                     , style "border" "10px solid"
                     ]
                     (drawLevel model.level)
+                , drawHeroAndMonsterStats model.level.heroModel model.level.playField.screenHeight model.level.monsterDict
                 , audio [ id "audio-player", visibility "hidden" ] []
 
                 --, div [] [ text (monsterCoordinatesToString model.level.monsterModels) ]
@@ -52,6 +57,41 @@ mainView model =
 
         Just error ->
             div [] [ div [] [ text error.method ], div [] [ text error.error ] ]
+
+
+drawHeroAndMonsterStats : HeroModel -> Float -> Dict String MonsterModel -> Svg Msg
+drawHeroAndMonsterStats hero height monsters =
+    div
+        [ -- todo width, as soon as i know
+          style "width" "500px"
+        , style "height" (makePxStringFromFloat height)
+        , style "display" "flex"
+        , style "flex-direction" "column"
+        ]
+        (renderHeroStats hero :: renderMonstersStats monsters)
+
+
+renderHeroStats : HeroModel -> Svg Msg
+renderHeroStats hero =
+    img heroImageStatsAttributes []
+
+
+renderMonstersStats : Dict String MonsterModel -> List (Svg Msg)
+renderMonstersStats monsters =
+    Dict.foldl renderMonsterStats [] monsters
+
+
+renderMonsterStats : String -> MonsterModel -> List (Svg Msg) -> List (Svg Msg)
+renderMonsterStats _ monster svgList =
+    div
+        [ style "width" (makePxStringFromInt imageStatsSize)
+        , style "height" (makePxStringFromInt imageStatsSize)
+        , style "position" "relative"
+        ]
+        [ img (monsterImageStatsAttributes monster.specie) []
+        , span monsterNumberStatsAttributes [ text (String.fromInt monster.number) ]
+        ]
+        :: svgList
 
 
 drawLevel : Level -> List (Svg Msg)
@@ -104,14 +144,14 @@ drawCell monsterDict key cell svgList =
                     svgList
 
                 Ok monster ->
-                    baseRect :: renderMonsterCell cell monster.specie Image :: svgList
+                    baseRect :: renderMonsterCell cell monster Image :: svgList
 
         Obstacle obstacleType ->
             baseRect :: renderObstacleCell obstacleType cell :: svgList
 
 
-renderMonsterCell : Cell -> Specie -> Display -> Svg msg
-renderMonsterCell cell specie displayType =
+renderMonsterCell : Cell -> MonsterModel -> Display -> Svg msg
+renderMonsterCell cell monster displayType =
     let
         ( baseAttributes, textAttributes ) =
             case displayType of
@@ -121,17 +161,12 @@ renderMonsterCell cell specie displayType =
                 Animation ->
                     ( baseCellAttributes, monsterNumberAnimationAttributes )
 
-        imageLink =
-            case specie of
-                Dummy ->
-                    "assets/images/dummyNoBg.png"
-
         imageAttributes =
-            SvgAttr.xlinkHref imageLink :: baseAttributes
+            SvgAttr.xlinkHref (getImageLinkForSpecie monster.specie) :: baseAttributes
     in
     Svg.g []
         [ Svg.image imageAttributes []
-        , Svg.text_ textAttributes [ Svg.text "3" ]
+        , Svg.text_ textAttributes [ Svg.text (String.fromInt monster.number) ]
         ]
 
 
@@ -161,6 +196,6 @@ renderHeroCell cell display =
                     baseCellAttributes
 
         attributesWithImage =
-            SvgAttr.xlinkHref "assets/images/swordsmanNoBg.png" :: attributes
+            SvgAttr.xlinkHref heroWarriorImageLink :: attributes
     in
     Svg.image attributesWithImage []

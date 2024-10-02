@@ -4,6 +4,7 @@ import Constants.Times exposing (halfMonsterAnimationDuration)
 import Functions.Animations.Helpers exposing (animatedG, makeAnimationStep)
 import Messages exposing (Msg)
 import Models.Cell exposing (Cell, Coordinate)
+import Models.Monster exposing (MonsterModel)
 import Simple.Animation as Animation exposing (Animation)
 import Simple.Animation.Property as P
 import Svg exposing (Svg)
@@ -11,13 +12,13 @@ import Types exposing (Display(..), Specie)
 import Views.MainView exposing (renderMonsterCell)
 
 
-makeMonsterIdleAnimationUnsafe : Specie -> Cell -> Svg Msg
-makeMonsterIdleAnimationUnsafe specie cell =
+makeMonsterIdleAnimationUnsafe : MonsterModel -> Cell -> Svg Msg
+makeMonsterIdleAnimationUnsafe monster cell =
     let
         animationCoordinate =
             Coordinate cell.gridX cell.gridY
     in
-    animatedG (makeIdleAnimation animationCoordinate) [] [ renderMonsterCell cell specie Animation ]
+    animatedG (makeIdleAnimation animationCoordinate) [] [ renderMonsterCell cell monster Animation ]
 
 
 makeIdleAnimation : Coordinate -> Animation
