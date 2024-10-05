@@ -94,3 +94,33 @@ baseCellAttributes =
     [ SvgAttr.width squareSizeInPixelString
     , SvgAttr.height squareSizeInPixelString
     ]
+
+
+widthStyle : Int -> Attribute msg
+widthStyle width =
+    style "width" (makePxStringFromInt width)
+
+
+heightStyle : Int -> Attribute msg
+heightStyle height =
+    style "height" (makePxStringFromInt height)
+
+
+backGroundColorStyle : String -> Attribute msg
+backGroundColorStyle color =
+    style "background" color
+
+
+displayFlexStyle : Attribute msg
+displayFlexStyle =
+    style "display" "flex"
+
+
+positionAbsoluteStyle : Attribute msg
+positionAbsoluteStyle =
+    style "position" "absolute"
+
+
+positionRelativeStyle : Attribute msg
+positionRelativeStyle =
+    style "position" "relative"

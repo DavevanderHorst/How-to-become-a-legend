@@ -1,6 +1,6 @@
 module Views.MainView exposing (..)
 
-import Constants.FieldSizes exposing (imageStatsSize)
+import Constants.FieldSizes exposing (halfSquareSize, healthBarHeight, healthBarWidth, imageStatsSize, squareSize)
 import Constants.Hero exposing (heroWarriorImageLink)
 import Constants.Monster exposing (getImageLinkForSpecie)
 import Dict exposing (Dict)
@@ -13,10 +13,11 @@ import Models.Hero exposing (HeroModel)
 import Models.Level exposing (Level)
 import Models.MainModel exposing (MainModel)
 import Models.Monster exposing (MonsterModel)
-import Svg exposing (Attribute, Svg)
+import Models.Stats exposing (Stats)
+import Svg exposing (Attribute, Svg, rect)
 import Svg.Attributes as SvgAttr exposing (visibility)
 import Types exposing (CellContent(..), Display(..), ObstacleType(..), Specie(..))
-import Views.Attributes exposing (baseCellAttributes, heroImageStatsAttributes, makeBaseGridCellAttributes, monsterImageStatsAttributes, monsterNumberAnimationAttributes, monsterNumberImageAttributes, monsterNumberStatsAttributes, textAttributes)
+import Views.Attributes exposing (backGroundColorStyle, baseCellAttributes, displayFlexStyle, heightStyle, heroImageStatsAttributes, makeBaseGridCellAttributes, monsterImageStatsAttributes, monsterNumberAnimationAttributes, monsterNumberImageAttributes, monsterNumberStatsAttributes, positionAbsoluteStyle, positionRelativeStyle, textAttributes, widthStyle)
 import Views.ViewHelpers exposing (makePxStringFromFloat, makePxStringFromInt)
 
 
@@ -45,7 +46,7 @@ mainView model =
                 [ Svg.svg
                     [ style "width" (makePxStringFromFloat model.level.playField.screenWidth)
                     , style "height" (makePxStringFromFloat model.level.playField.screenHeight)
-                    , style "background-color" "WhiteSmoke"
+                    , backGroundColorStyle "WhiteSmoke"
                     , style "border" "10px solid"
                     ]
                     (drawLevel model.level)
@@ -63,35 +64,86 @@ drawHeroAndMonsterStats : HeroModel -> Float -> Dict String MonsterModel -> Svg 
 drawHeroAndMonsterStats hero height monsters =
     div
         [ -- todo width, as soon as i know
-          style "width" "500px"
-        , style "height" (makePxStringFromFloat height)
-        , style "display" "flex"
+          widthStyle 500
+        , heightStyle (round height)
+        , displayFlexStyle
         , style "flex-direction" "column"
         ]
         (renderHeroStats hero :: renderMonstersStats monsters)
 
 
-renderHeroStats : HeroModel -> Svg Msg
+renderHeroStats : HeroModel -> Html Msg
 renderHeroStats hero =
-    img heroImageStatsAttributes []
+    div [ displayFlexStyle ]
+        [ img heroImageStatsAttributes []
+        , renderHealthBar hero.stats
+        ]
 
 
-renderMonstersStats : Dict String MonsterModel -> List (Svg Msg)
+renderHealthBar : Stats -> Svg Msg
+renderHealthBar stats =
+    let
+        percentage =
+            toFloat stats.currentHitPoints / toFloat stats.maxHitPoints
+
+        currentBarColor =
+            getBarColorForPercentage percentage
+
+        currentBarLength =
+            toFloat healthBarWidth * percentage
+    in
+    div [ positionRelativeStyle ]
+        [ renderHealthBarPart healthBarWidth "black"
+        , renderHealthBarPart (round currentBarLength) currentBarColor
+        ]
+
+
+getBarColorForPercentage : Float -> String
+getBarColorForPercentage percentage =
+    if percentage > 0.8 then
+        "green"
+
+    else if percentage > 0.6 then
+        "yellow"
+
+    else if percentage > 0.3 then
+        "orange"
+
+    else
+        "red"
+
+
+renderHealthBarPart : Int -> String -> Svg Msg
+renderHealthBarPart width color =
+    div
+        [ widthStyle width
+        , heightStyle healthBarHeight
+        , backGroundColorStyle color
+        , positionAbsoluteStyle
+        , style "bottom" (makePxStringFromInt halfSquareSize)
+        ]
+        []
+
+
+renderMonstersStats : Dict String MonsterModel -> List (Html Msg)
 renderMonstersStats monsters =
     Dict.foldl renderMonsterStats [] monsters
 
 
-renderMonsterStats : String -> MonsterModel -> List (Svg Msg) -> List (Svg Msg)
-renderMonsterStats _ monster svgList =
-    div
-        [ style "width" (makePxStringFromInt imageStatsSize)
-        , style "height" (makePxStringFromInt imageStatsSize)
-        , style "position" "relative"
+renderMonsterStats : String -> MonsterModel -> List (Svg Msg) -> List (Html Msg)
+renderMonsterStats _ monster htmlList =
+    div [ displayFlexStyle ]
+        [ div
+            [ widthStyle imageStatsSize
+            , heightStyle imageStatsSize
+            , positionRelativeStyle
+            ]
+            [ img (monsterImageStatsAttributes monster.specie) []
+            , span monsterNumberStatsAttributes [ text (String.fromInt monster.number) ]
+            ]
+        , renderHealthBar monster.stats
         ]
-        [ img (monsterImageStatsAttributes monster.specie) []
-        , span monsterNumberStatsAttributes [ text (String.fromInt monster.number) ]
-        ]
-        :: svgList
+        :: htmlList
 
 
 drawLevel : Level -> List (Svg Msg)

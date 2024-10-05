@@ -1,6 +1,7 @@
 module Levels.TestLevel exposing (..)
 
 import Constants.FieldSizes exposing (betweenSquaresSize, totalSquareSize)
+import Constants.Monster exposing (getStatsForSpecie)
 import Dict exposing (Dict)
 import Functions.PathFinding exposing (setPathFindingInPlayField)
 import Functions.PlayField.Helpers exposing (makeDictKeyFromCoordinate)
@@ -11,6 +12,7 @@ import Models.Level exposing (Level, PlayField)
 import Models.MainModel exposing (Error)
 import Models.Monster exposing (MonsterModel)
 import Models.Obstacle exposing (ObstacleModel)
+import Models.Stats exposing (Stats)
 import Types exposing (Action(..), CellContent(..), ObstacleType(..), Specie(..))
 
 
@@ -26,7 +28,12 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 2 5 }
+    { coordinate = Coordinate 2 5, stats = Stats 20 10 }
+
+
+dummyStats : Stats
+dummyStats =
+    getStatsForSpecie Dummy
 
 
 monsterList : List MonsterModel
@@ -35,16 +42,19 @@ monsterList =
       , specie = Dummy
       , action = Moving
       , number = 1
+      , stats = Stats 20 5
       }
     , { coordinate = Coordinate 1 5
       , specie = Dummy
       , action = Moving
       , number = 2
+      , stats = Stats 20 2
       }
     , { coordinate = Coordinate 2 3
       , specie = Dummy
       , action = Moving
       , number = 3
+      , stats = Stats 20 15
       }
     ]
 
