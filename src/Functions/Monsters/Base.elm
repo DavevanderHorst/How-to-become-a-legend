@@ -139,3 +139,15 @@ setMonsterAction heroCoordinate _ monster ( monsterDict, playField ) =
                 updateMonsterInPlayFieldUnsafe updatedMonster playField
     in
     ( updatedMonsterDict, updatedPlayField )
+
+
+doDamageToMonster : MonsterModel -> Int -> MonsterModel
+doDamageToMonster monster damage =
+    let
+        stats =
+            monster.stats
+
+        updatedStats =
+            { stats | currentHitPoints = stats.currentHitPoints - damage }
+    in
+    { monster | stats = updatedStats }

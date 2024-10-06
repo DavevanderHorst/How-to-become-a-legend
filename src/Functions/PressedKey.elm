@@ -1,9 +1,8 @@
 module Functions.PressedKey exposing (..)
 
 import Constants.Sounds exposing (bumpInWallSound)
-import Constants.Times exposing (heroMoveAnimationDuration)
-import Functions.Animations.Move exposing (makeHeroMoveAnimationSvg)
 import Functions.Coordinate exposing (getNextCoordinateForDirection)
+import Functions.Hero.Movement exposing (handleHeroMovement)
 import Functions.Level exposing (removeHeroFromPlayFieldInLevel)
 import Functions.PlayField.Get exposing (tryGetCellFromFieldByCoordinate)
 import Functions.PlayField.Set exposing (removeStepsFromPlayField)
@@ -12,7 +11,6 @@ import Functions.ToString exposing (coordinateToString)
 import Messages exposing (Msg(..))
 import Models.MainModel exposing (MainModel)
 import Ports exposing (playMusic)
-import Process
 import Random
 import Task
 import Types exposing (CellContent(..), Direction(..), PlayerInput(..), PressedKey(..))
@@ -87,53 +85,13 @@ handlePressedArrowDirection direction model =
 
                 updatedLevel =
                     removeHeroFromPlayFieldInLevel { oldLevel | playField = playFieldWithRemovedPathFinding }
+
+                updatedModel =
+                    { model | level = updatedLevel }
             in
             case nextCell.content of
                 Empty ->
-                    -- we can move
-                    -- set move animation, for this we also need the current hero cell.
-                    let
-                        currentHeroCellResult =
-                            tryGetCellFromFieldByCoordinate updatedLevel.heroModel.coordinate updatedLevel.playField.field
-                    in
-                    case currentHeroCellResult of
-                        -- we remove hero from play field, and set the new coordinate as hero coordinate
-                        -- then we remove all old steps
-                        -- then we set the pathfinding for the new coordinate
-                        -- if move animation is finished, we set hero on this new spot.
-                        Ok currentHeroCell ->
-                            let
-                                moveAnimation =
-                                    makeHeroMoveAnimationSvg currentHeroCell nextCell
-
-                                oldHeroModel =
-                                    updatedLevel.heroModel
-
-                                newHeroCoordinate =
-                                    nextCell.coordinate
-
-                                updatedHeroModel =
-                                    { oldHeroModel | coordinate = newHeroCoordinate }
-
-                                finishedLevel =
-                                    { updatedLevel
-                                        | heroModel = updatedHeroModel
-                                        , animations = [ moveAnimation ]
-                                    }
-
-                                nextCommand =
-                                    Process.sleep (toFloat <| heroMoveAnimationDuration) |> Task.perform (always HeroAnimationIsDone)
-                            in
-                            ( { model | level = finishedLevel, playerInput = Stopped }, nextCommand )
-
-                        Err error ->
-                            let
-                                newError =
-                                    { method = "handlePressedArrowDirection - " ++ error.method
-                                    , error = "Failed to make move animation, currentHeroCell is not found in our play field. - " ++ error.error
-                                    }
-                            in
-                            ( { model | error = Just newError }, Cmd.none )
+                    handleHeroMovement nextCell updatedModel
 
                 Hero ->
                     let

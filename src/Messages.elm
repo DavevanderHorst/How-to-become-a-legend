@@ -1,7 +1,7 @@
 module Messages exposing (..)
 
 import Browser.Dom exposing (Viewport)
-import Models.Cell exposing (Cell)
+import Models.Cell exposing (Cell, Coordinate)
 import Models.Monster exposing (MonsterModel)
 import Types exposing (PressedKey)
 

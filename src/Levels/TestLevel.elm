@@ -28,7 +28,7 @@ columns =
 
 heroStartModel : HeroModel
 heroStartModel =
-    { coordinate = Coordinate 2 5, stats = Stats 20 10 }
+    { coordinate = Coordinate 2 5, stats = Stats 20 20 }
 
 
 dummyStats : Stats
@@ -42,19 +42,19 @@ monsterList =
       , specie = Dummy
       , action = Moving
       , number = 1
-      , stats = Stats 20 5
+      , stats = dummyStats
       }
     , { coordinate = Coordinate 1 5
       , specie = Dummy
       , action = Moving
       , number = 2
-      , stats = Stats 20 2
+      , stats = dummyStats
       }
     , { coordinate = Coordinate 2 3
       , specie = Dummy
       , action = Moving
       , number = 3
-      , stats = Stats 20 15
+      , stats = dummyStats
       }
     ]
 

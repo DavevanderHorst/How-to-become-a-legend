@@ -49,3 +49,12 @@ removeMonsterFromDictByCoordinateUnsafe coordinate monsterDict =
             makeDictKeyFromCoordinate coordinate
     in
     Dict.remove dictKey monsterDict
+
+
+setMonsterInDictByCoordinateUnsafe : MonsterModel -> Dict String MonsterModel -> Dict String MonsterModel
+setMonsterInDictByCoordinateUnsafe monster monsterDict =
+    let
+        dictKey =
+            makeDictKeyFromCoordinate monster.coordinate
+    in
+    Dict.insert dictKey monster monsterDict
